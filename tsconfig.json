@@ -25,6 +25,10 @@
     "module": "NodeNext",
     "moduleResolution": "nodenext",
     "target": "es2022",
+    "outDir": "dist",
+    "rootDir": "src",
     "jsx": "react-jsx"
-  }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
