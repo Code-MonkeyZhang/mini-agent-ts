@@ -2,6 +2,8 @@ import { Command } from "commander";
 import * as path from "node:path";
 import * as fs from "node:fs";
 import { fileURLToPath } from "node:url";
+import type { CompleterResult } from "node:readline";
+import { createInterface } from "node:readline/promises";
 import { Config } from "./config.js";
 import { LLMClient } from "./llm/llm_wrapper.js";
 import { Agent } from "./agent.js";
@@ -68,19 +70,59 @@ Examples:
   };
 }
 
+function printHelp(): void {
+  console.log(`
+Available Commands:
+  /help      - Show this help message
+  /clear     - Clear session history (keep system prompt)
+  /history   - Show current session message count
+  /stats     - Show session statistics
+  /exit      - Exit program (also: exit, quit, q)
+`);
+}
+
+function formatDuration(ms: number): string {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return `${hours.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+}
+
+function printStats(agent: Agent, sessionStartMs: number): void {
+  const duration = formatDuration(Date.now() - sessionStartMs);
+  const total = agent.messages.length;
+  const userMsgs = agent.messages.filter((m) => m.role === "user").length;
+  const assistantMsgs = agent.messages.filter(
+    (m) => m.role === "assistant"
+  ).length;
+  const toolMsgs = agent.messages.filter((m) => m.role === "tool").length;
+
+  console.log("\nSession Statistics:");
+  console.log("─".repeat(40));
+  console.log(`  Session Duration: ${duration}`);
+  console.log(`  Total Messages: ${total}`);
+  console.log(`    - User Messages: ${userMsgs}`);
+  console.log(`    - Assistant Replies: ${assistantMsgs}`);
+  console.log(`    - Tool Calls: ${toolMsgs}`);
+  console.log("─".repeat(40) + "\n");
+}
+
 // ============ 核心启动逻辑 ============
 
 async function runAgent(workspaceDir: string): Promise<void> {
   console.log(`Agent starting in: ${workspaceDir}`);
+  const sessionStartMs = Date.now();
 
-  // TODO: 加载配置文件
+  // 加载配置文件
   const configPath = Config.getDefaultConfigPath();
   const config = Config.fromYaml(configPath);
   console.log(`Config loaded from: ${configPath}`);
   console.log(`Model: ${config.llm.model}, Provider: ${config.llm.provider},`);
 
-  // TODO: 初始化 LLM Client
-
+  // 初始化 LLM Client
   const llmClient = new LLMClient(
     config.llm.apiKey,
     config.llm.apiBase,
@@ -88,8 +130,7 @@ async function runAgent(workspaceDir: string): Promise<void> {
     config.llm.model
   );
 
-  // TODO: 初始化工具
-  // TODO: 加载 system prompt, skill
+  // 加载 system prompt
   let systemPrompt: string;
   let systemPromptPath = Config.findConfigFile(config.agent.systemPromptPath);
   if (systemPromptPath && fs.existsSync(systemPromptPath)) {
@@ -100,13 +141,105 @@ async function runAgent(workspaceDir: string): Promise<void> {
       "You are Mini-Agent, an intelligent assistant powered by MiniMax M2 that can help users complete various tasks.";
     console.log("⚠️  System prompt not found, using default");
   }
-  // TODO: 创建 Agent 类
+
+  // 创建 Agent 类
   let agent = new Agent(llmClient, systemPrompt, config.agent.maxSteps);
-  console.log(agent.systemPrompt);
-  // TODO: 打印欢迎信息
+  void agent; // 会被清理
+
   printBanner();
-  // TODO: 配置 readline 的输入
-  // TODO: 正式开启 agent 交互主循环
+  console.log(`Model: ${config.llm.model}`);
+  console.log(`Workspace: ${workspaceDir}`);
+  console.log(`Type /help for help, /exit to quit\n`);
+
+  const commands: string[] = [
+    "/help",
+    "/clear",
+    "/history",
+    "/stats",
+    "/exit",
+    "/quit",
+    "/q",
+  ];
+  const commandSet = new Set(commands);
+
+  const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    terminal: true,
+    historySize: 1000,
+    removeHistoryDuplicates: true,
+    completer: (line: string) => {
+      if (!line.startsWith("/")) return [[], line] as CompleterResult;
+      const hits = commands.filter((c) => c.startsWith(line));
+      return [hits.length ? hits : commands, line] as CompleterResult;
+    },
+  });
+  let interrupted = false;
+  const onSigint = (): void => {
+    interrupted = true;
+    try {
+      rl.close();
+    } catch {
+      // ignore
+    }
+  };
+  process.once("SIGINT", onSigint);
+
+  try {
+    while (true) {
+      let raw: string;
+      try {
+        raw = await rl.question("You › ");
+      } catch (error) {
+        if (interrupted) break;
+        throw error;
+      }
+
+      const userInput = raw.trim();
+      if (!userInput) continue;
+
+      if (userInput.startsWith("/")) {
+        const cmd = userInput.toLowerCase();
+        if (cmd === "/help") {
+          printHelp();
+          continue;
+        }
+        if (cmd === "/clear") {
+          const removed = agent.clearHistoryKeepSystem();
+          console.log(`✅ Cleared ${removed} messages, starting new session\n`);
+          continue;
+        }
+        if (cmd === "/history") {
+          console.log(
+            `\nCurrent session message count: ${agent.messages.length}\n`
+          );
+          continue;
+        }
+        if (cmd === "/stats") {
+          printStats(agent, sessionStartMs);
+          continue;
+        }
+        if (cmd === "/exit" || cmd === "/quit" || cmd === "/q") break;
+
+        if (commandSet.has(cmd)) break;
+        console.log(`❌ Unknown command: ${userInput}`);
+        console.log(`Type /help to see available commands\n`);
+        continue;
+      }
+
+      if (userInput === "exit" || userInput === "quit" || userInput === "q")
+        break;
+
+      console.log("\nAgent › Thinking...\n");
+      const reply = await agent.run();
+      console.log(`Agent › ${reply}`);
+      console.log("\n" + "─".repeat(60) + "\n");
+    }
+  } finally {
+    process.removeListener("SIGINT", onSigint);
+    rl.close();
+    if (!interrupted) printStats(agent, sessionStartMs);
+  }
   // TODO: 清理 MCP 连接
 }
 
