@@ -3,6 +3,10 @@ import * as fs from "node:fs";
 import { LLMClient } from "./llm/llm_wrapper.js";
 import type { LLMResponse, Message } from "./schema/index.js";
 
+// ============ 常量 ============
+
+const SEPARATOR_WIDTH = 60;
+
 // ============ 辅助函数 ============
 
 function createSpinner(message: string = "Thinking"): { stop: () => void } {
@@ -17,9 +21,23 @@ function createSpinner(message: string = "Thinking"): { stop: () => void } {
   return {
     stop: () => {
       clearInterval(interval);
-      process.stdout.write("\r" + " ".repeat(message.length + 10) + "\r"); // 清除行
+      process.stdout.write("\r" + " ".repeat(message.length + 10) + "\r");
     },
   };
+}
+
+function buildSystemPrompt(basePrompt: string, workspaceDir: string): string {
+  if (basePrompt.includes("Current Workspace")) {
+    return basePrompt;
+  }
+  return (
+    basePrompt +
+    `
+
+## Current Workspace
+You are currently working in: \`${workspaceDir}\`
+All relative paths will be resolved relative to this directory.`
+  );
 }
 
 function printAssistantResponse(response: LLMResponse): void {
@@ -28,9 +46,9 @@ function printAssistantResponse(response: LLMResponse): void {
   // Print thinking if present
   if (response.thinking) {
     console.log("💭 Thinking:");
-    console.log("─".repeat(60));
+    console.log("─".repeat(SEPARATOR_WIDTH));
     console.log(response.thinking);
-    console.log("─".repeat(60));
+    console.log("─".repeat(SEPARATOR_WIDTH));
     console.log();
   }
 
@@ -56,6 +74,7 @@ export class Agent {
   public messages: Message[];
   public tokenLimit: number;
   public workspaceDir: string;
+
   constructor(
     llmClient: LLMClient,
     systemPrompt: string,
@@ -71,20 +90,12 @@ export class Agent {
     this.workspaceDir = path.resolve(workspaceDir);
     fs.mkdirSync(this.workspaceDir, { recursive: true });
 
-    // 将workspace dir注入system prompt 然后再加入
-    if (!systemPrompt.includes("Current Workspace")) {
-      const workspaceInfo =
-        `\n\n## ${"Current Workspace"}` +
-        `\nYou are currently working in: \`${workspaceDir}\`` +
-        `\nAll relative paths will be resolved relative to this directory.`;
-      systemPrompt += workspaceInfo;
-    }
+    // 将 workspace dir 注入 system prompt
+    this.systemPrompt = buildSystemPrompt(systemPrompt, workspaceDir);
+    this.messages = [{ role: "system", content: this.systemPrompt }];
 
-    this.systemPrompt = systemPrompt;
-    this.messages = [{ role: "system", content: systemPrompt }]; // 填入system prompt
-
-    //TODO 初始化Logger
-    //TODO 启动TOKEN计算
+    // TODO: 初始化 Logger
+    // TODO: 启动 TOKEN 计算
   }
 
   addUserMessage(content: string): void {
@@ -92,53 +103,42 @@ export class Agent {
   }
 
   clearHistoryKeepSystem(): number {
-    const removed = Math.max(0, this.messages.length - 1);
-    this.messages = this.messages.slice(0, 1);
+    const removed = this.messages.length - 1;
+    this.messages = [this.messages[0]];
     return removed;
   }
 
   async run(): Promise<string> {
-    let step = 0;
+    for (let step = 0; step < this.maxSteps; step++) {
+      // TODO: Check and summarize message history to prevent context overflow
 
-    while (step < this.maxSteps) {
-      // TODO Check and summarize message history to prevent context overflow
-      // TODO 添加回复的cli界面Header
-
-      // 启用LLM 接收回复
-      let response: LLMResponse;
       const spinner = createSpinner("Thinking");
+      let response: LLMResponse;
 
       try {
         response = await this.llmClient.generate(this.messages);
-      } catch (error) {
+      } finally {
         spinner.stop();
-        //TODO API失败时的情况
-        throw error;
       }
-
-      spinner.stop();
 
       // 打印 LLM 回复
       printAssistantResponse(response);
 
       // Add assistant message
-      const message: Message = {
+      this.messages.push({
         role: "assistant",
         content: response.content,
         thinking: response.thinking,
-      };
-      this.messages.push(message);
-      // Check if task is complete (no tool calls)
-      // Execute tool calls
+      });
 
+      // Check if task is complete (no tool calls)
       if (!response.tool_calls) {
         return response.content;
       }
-      step += 1;
+
+      // TODO: Execute tool calls
     }
 
-    // Max steps reached, return error
-    const errorMsg = "Task couldn't be completed after {self.max_steps} steps.";
-    return errorMsg;
+    return `Task couldn't be completed after ${this.maxSteps} steps.`;
   }
 }
