@@ -144,7 +144,6 @@ async function runAgent(workspaceDir: string): Promise<void> {
 
   // 创建 Agent 类
   let agent = new Agent(llmClient, systemPrompt, config.agent.maxSteps);
-  void agent; // 会被清理
 
   printBanner();
   console.log(`Model: ${config.llm.model}`);
@@ -185,11 +184,12 @@ async function runAgent(workspaceDir: string): Promise<void> {
   };
   process.once("SIGINT", onSigint);
 
+  // 开启Agent主循环
   try {
     while (true) {
       let raw: string;
       try {
-        raw = await rl.question("You › ");
+        raw = await rl.question("You > ");
       } catch (error) {
         if (interrupted) break;
         throw error;
@@ -229,10 +229,8 @@ async function runAgent(workspaceDir: string): Promise<void> {
 
       if (userInput === "exit" || userInput === "quit" || userInput === "q")
         break;
-
-      console.log("\nAgent › Thinking...\n");
-      const reply = await agent.run();
-      console.log(`Agent › ${reply}`);
+      agent.addUserMessage(userInput);
+      await agent.run();
       console.log("\n" + "─".repeat(60) + "\n");
     }
   } finally {

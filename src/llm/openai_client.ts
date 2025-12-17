@@ -16,11 +16,6 @@ import { LLMClientBase } from "./base.js";
  * - Tool calling
  */
 export class OpenAIClient extends LLMClientBase {
-  protected override convertMessages(
-    messages: Message[]
-  ): [string | null, Record<string, any>[]] {
-    throw new Error("Method not implemented.");
-  }
   private client: OpenAI;
   constructor(
     apiKey: string,
@@ -34,6 +29,25 @@ export class OpenAIClient extends LLMClientBase {
     });
   }
 
+  protected override convertMessages(
+    messages: Message[]
+  ): [string | null, Record<string, any>[]] {
+    let apiMessages = [];
+
+    for (const msg of messages) {
+      // msg 是每个消息对象
+      if (msg.role === "system") {
+        apiMessages.push({ role: "system", content: msg.content });
+        continue;
+      } else if (msg.role === "user") {
+        apiMessages.push({ role: "user", content: msg.content });
+      } else if (msg.role === "assistant") {
+        apiMessages.push({ role: "assistant", content: msg.content });
+      }
+    }
+
+    return [null, apiMessages];
+  }
   /**
    * Execute API request.
    *
@@ -42,8 +56,7 @@ export class OpenAIClient extends LLMClientBase {
    * @returns OpenAI ChatCompletion response
    */
   private async makeApiRequest(
-    apiMessages: Record<string, any>[],
-    tools?: any[] | null
+    apiMessages: Record<string, any>[]
   ): Promise<OpenAI.Chat.Completions.ChatCompletion> {
     const params: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming =
       {
@@ -53,7 +66,7 @@ export class OpenAIClient extends LLMClientBase {
       };
 
     // Enable reasoning_split to separate thinking content (for MiniMax)
-    (params as any).reasoning_split = true;
+    // (params as any).reasoning_split = true;
 
     const response = await this.client.chat.completions.create(params);
     return response;
@@ -69,9 +82,9 @@ export class OpenAIClient extends LLMClientBase {
     * @returns Dictionary containing request parameters
     */
   public override prepareRequest(messages: Message[]): Record<string, any> {
+    const [, apiMessages] = this.convertMessages(messages);
     return {
-      model: this.model,
-      messages: messages,
+      apiMessages,
     };
   }
 
@@ -129,12 +142,8 @@ export class OpenAIClient extends LLMClientBase {
     messages: Message[],
     tool?: any[] | null
   ): Promise<LLMResponse> {
-    let requestParams = this.prepareRequest(messages);
-
-    let response = await this.makeApiRequest(
-      requestParams["apiMessages"],
-      requestParams["tools"]
-    );
+    const requestParams = this.prepareRequest(messages);
+    const response = await this.makeApiRequest(requestParams["apiMessages"]);
 
     return this.parseResponse(response);
   }

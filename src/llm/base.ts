@@ -1,9 +1,12 @@
 import type { Message, LLMResponse } from "../schema/index.js";
+import { RetryConfig } from "../config.js";
 
 export abstract class LLMClientBase {
   public apiKey: string;
   public apiBase: string;
   public model: string;
+  public retryConfig: RetryConfig;
+  public retryCallback: ((error: unknown, attempt: number) => void) | null;
 
   /**
    * Initialize the LLM client.
@@ -13,10 +16,17 @@ export abstract class LLMClientBase {
    * @param model Model name to use
    * @param retryConfig Optional retry configuration
    */
-  constructor(apiKey: string, apiBase: string, model: string) {
+  constructor(
+    apiKey: string,
+    apiBase: string,
+    model: string,
+    retryConfig?: RetryConfig
+  ) {
     this.apiKey = apiKey;
     this.apiBase = apiBase;
     this.model = model;
+    this.retryConfig = retryConfig ?? new RetryConfig();
+    this.retryCallback = null;
   }
 
   /**
@@ -28,7 +38,7 @@ export abstract class LLMClientBase {
    */
   public abstract generate(
     messages: Message[],
-    tool?: any[] | null
+    tools?: unknown[] | null
   ): Promise<LLMResponse>;
 
   /**
@@ -38,7 +48,10 @@ export abstract class LLMClientBase {
    * @param tools Optional list of available tools
    * @returns Dictionary containing the request payload
    */
-  public abstract prepareRequest(messages: Message[]): Record<string, any>;
+  public abstract prepareRequest(
+    messages: Message[],
+    tools?: unknown[] | null
+  ): Record<string, any>;
 
   /**
    * Convert internal message format to API-specific format.

@@ -29,7 +29,6 @@ export interface Message {
   name?: string | null; // 用于 tool 角色
 }
 
-// 内容块（用于多模态）
 export interface ContentBlock {
   type: string;
   text?: string;
