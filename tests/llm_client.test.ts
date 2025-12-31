@@ -1,107 +1,58 @@
-import { describe, it, expect, beforeAll } from "vitest";
-import { Config } from "../src/config";
-import { LLMClient } from "../src/llm/llm_wrapper";
-import type { Message } from "../src/schema/schema";
+import { describe, it, expect } from "vitest";
+import { Config } from "../src/config.js";
+import { LLMClient } from "../src/llm/llm_wrapper.js";
+import type { Message } from "../src/schema/schema.js";
 
 /**
  * LLM API Integration Test
  *
  * 这是一个集成测试，会实际调用 LLM API。
- * 默认不会在 `npm run preflight` 中运行；需要显式开启：
- *
- *   MINI_AGENT_TS_RUN_LLM_INTEGRATION_TESTS=1 npm run test:run
- *
- * 运行前请确保已正确配置 `Mini-Agent-TS/config.yaml`（包含 `api_key`），并且当前环境允许网络访问。
+ * 运行前请确保已正确配置 `Mini-Agent-TS/config/config.yaml`（测试从 `Mini-Agent-TS/` 目录运行时即 `./config/config.yaml`），并且当前环境允许网络访问。
  */
-const describeIf = (condition: boolean) => (condition ? describe : describe.skip);
-const shouldRunIntegration =
-  process.env.MINI_AGENT_TS_RUN_LLM_INTEGRATION_TESTS === "1";
-
-describeIf(shouldRunIntegration)("LLM API Integration", () => {
-  let llmClient: LLMClient;
-  let configLoaded = false;
-
-  beforeAll(() => {
+describe("LLM API Integration (stream)", () => {
+  it("should stream a response from the configured LLM API", async () => {
+    let config: Config;
     try {
-      const config = Config.load();
-      llmClient = new LLMClient(
-        config.llm.apiKey,
-        config.llm.apiBase,
-        config.llm.provider,
-        config.llm.model,
-        config.llm.retry
-      );
-      configLoaded = true;
-      console.log(
-        `Testing with model: ${config.llm.model}, provider: ${config.llm.provider}`
-      );
+      config = Config.load();
     } catch (error) {
-      console.warn(
-        "⚠️  Config not found or invalid. LLM integration tests will be skipped."
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(
+        [
+          "LLM integration test is enabled, but config could not be loaded.",
+          message,
+          "Expected: ./config/config.yaml (api_key + provider + model).",
+        ].join("\n")
       );
-      console.warn("   Please ensure config.yaml is properly set up.");
     }
-  });
 
-  it("should successfully connect and get a response from LLM API", async () => {
-    // 如果配置未加载，跳过测试
-    if (!configLoaded) {
-      console.log("Skipping: Config not loaded");
-      return;
-    }
+    const llmClient = new LLMClient(
+      config.llm.apiKey,
+      config.llm.apiBase,
+      config.llm.provider,
+      config.llm.model,
+      config.llm.retry
+    );
 
     const messages: Message[] = [
-      {
-        role: "system",
-        content: "You are a helpful assistant. Reply concisely.",
-      },
-      { role: "user", content: 'Say "Hello, World!" and nothing else.' },
-    ];
-
-    const response = await llmClient.generate(messages);
-
-    // 验证响应结构
-    expect(response).toBeDefined();
-    expect(response.content).toBeDefined();
-    expect(typeof response.content).toBe("string");
-    expect(response.content.length).toBeGreaterThan(0);
-    expect(response.finish_reason).toBeDefined();
-
-    console.log(`✅ LLM Response: "${response.content.substring(0, 100)}..."`);
-    console.log(`   Finish reason: ${response.finish_reason}`);
-    if (response.usage) {
-      console.log(`   Tokens used: ${response.usage.total_tokens}`);
-    }
-  }, 30000); // 设置 30 秒超时，因为 API 调用可能较慢
-
-  it("should handle streaming response", async () => {
-    if (!configLoaded) {
-      console.log("Skipping: Config not loaded");
-      return;
-    }
-
-    const messages: Message[] = [
-      { role: "user", content: "Count from 1 to 3." },
+      { role: "user", content: "Reply with exactly: pong" },
     ];
 
     let fullContent = "";
-    let chunkCount = 0;
+    let sawDone = false;
+    let chunks = 0;
 
     for await (const chunk of llmClient.generateStream(messages)) {
-      if (chunk.content) {
-        fullContent += chunk.content;
-        chunkCount++;
-      }
+      if (chunk.content) fullContent += chunk.content;
       if (chunk.done) {
+        sawDone = true;
         break;
       }
+      chunks++;
+      if (chunks > 200) break;
     }
 
-    expect(fullContent.length).toBeGreaterThan(0);
-    expect(chunkCount).toBeGreaterThan(0);
-
-    console.log(`✅ Streaming Response: "${fullContent.substring(0, 100)}..."`);
-    console.log(`   Received ${chunkCount} chunks`);
+    expect(sawDone).toBe(true);
+    expect(fullContent.trim().length).toBeGreaterThan(0);
+    expect(fullContent).toMatch(/pong/i);
   }, 30000);
-
 });

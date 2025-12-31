@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import type { Tool, ToolResult } from "../src/tools/base";
-import { toAnthropicSchema, toOpenAISchema } from "../src/tools/base";
+import type { Tool, ToolResult } from "../src/tools/base.js";
+import { toAnthropicSchema, toOpenAISchema } from "../src/tools/base.js";
 
 class MockWeatherTool implements Tool<{ location: string }> {
   name = "get_weather";

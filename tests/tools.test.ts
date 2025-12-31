@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import * as os from "node:os";
-import { ReadTool, WriteTool, EditTool } from "../src/tools/file_tools";
+import { ReadTool, WriteTool, EditTool } from "../src/tools/file_tools.js";
 
 describe("File tools", () => {
   it("should read files with line numbers", async () => {
@@ -26,7 +26,11 @@ describe("File tools", () => {
     await fs.writeFile(filePath, "a\nb\nc\nd\n", "utf8");
 
     const tool = new ReadTool(tempDir);
-    const result = await tool.execute({ path: "sample.txt", offset: 2, limit: 2 });
+    const result = await tool.execute({
+      path: "sample.txt",
+      offset: 2,
+      limit: 2,
+    });
 
     expect(result.success).toBe(true);
     expect(result.content).toContain("     2|b");

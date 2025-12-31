@@ -3,14 +3,16 @@ import {
   BashTool,
   BashOutputTool,
   BashKillTool,
-} from "../src/tools/bash_tool";
+} from "../src/tools/bash_tool.js";
 
 const describeIf = process.platform === "win32" ? describe.skip : describe;
 
 describeIf("Bash tool", () => {
   it("should execute foreground commands", async () => {
     const tool = new BashTool();
-    const result = await tool.execute({ command: "echo 'Hello from foreground'" });
+    const result = await tool.execute({
+      command: "echo 'Hello from foreground'",
+    });
 
     expect(result.success).toBe(true);
     expect(result.stdout).toContain("Hello from foreground");
@@ -104,7 +106,9 @@ describeIf("Bash tool", () => {
     expect(killResult.error?.toLowerCase()).toContain("not found");
 
     const outputTool = new BashOutputTool();
-    const outputResult = await outputTool.execute({ bash_id: "nonexistent123" });
+    const outputResult = await outputTool.execute({
+      bash_id: "nonexistent123",
+    });
 
     expect(outputResult.success).toBe(false);
     expect(outputResult.error?.toLowerCase()).toContain("not found");
