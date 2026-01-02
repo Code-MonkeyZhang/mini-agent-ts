@@ -10,8 +10,13 @@ import type { Message } from "../src/schema/schema.js";
  * Before running, ensure `Mini-Agent-TS/config/config.yaml` is configured correctly
  * (when running from `Mini-Agent-TS/`, the path is `./config/config.yaml`) and that
  * your environment allows network access.
+ *
+ * Enable with: RUN_LLM_INTEGRATION_TESTS=1
  */
-describe("LLM API Integration (stream)", () => {
+const maybeDescribe =
+  process.env.RUN_LLM_INTEGRATION_TESTS === "1" ? describe : describe.skip;
+
+maybeDescribe("LLM API Integration (stream)", () => {
   it("should stream a response from the configured LLM API", async () => {
     let config: Config;
     try {

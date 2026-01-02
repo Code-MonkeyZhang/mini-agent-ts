@@ -77,6 +77,6 @@ describe("Retry Mechanism", () => {
     expect(onRetry).toHaveBeenNthCalledWith(2, expect.any(Error), 2);
   });
 
-  // Note: the `enabled` flag should be checked by the caller (e.g. OpenAIClient.generate()),
+  // Note: the `enabled` flag should be checked by the caller (e.g. OpenAIClient.generateStream()),
   // not inside asyncRetry. asyncRetry assumes that retries are desired when it is invoked.
 });
