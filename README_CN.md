@@ -2,7 +2,7 @@
 
 # Mini-Agent (TypeScript 版) 快速启动指南
 
-> 本项目是 [Mini-Agent (Python 版)](https://github.com/MiniMax-AI/Mini-Agent) 的 TypeScript 实现版本。
+> 本项目是 Minimax 开源的[Mini-Agent](https://github.com/MiniMax-AI/Mini-Agent) 项目的 TypeScript 实现版本。
 
 这是一个可以在你的终端（命令行）中运行的 AI 智能体，它能帮你读写文件、执行系统命令。
 
@@ -55,12 +55,12 @@ npm run build && npm link
 
 你需要告诉 AI 你的身份凭证。
 
-1.  进入项目文件夹下的 `config` 目录。
-2.  将 `config-example.yaml` 复制一份并重命名为 `config.yaml`：
-    ```bash
-    cp config/config-example.yaml config/config.yaml
-    ```
-3.  用记事本或代码编辑器打开 `config.yaml`，修改以下关键配置：
+1. 进入项目文件夹下的 `config` 目录。
+2. 将 `config-example.yaml` 复制一份并重命名为 `config.yaml`：
+   ```bash
+   cp config/config-example.yaml config/config.yaml
+   ```
+3. 用记事本或代码编辑器打开 `config.yaml`，修改以下关键配置：
 
 ```yaml
 # config/config.yaml
