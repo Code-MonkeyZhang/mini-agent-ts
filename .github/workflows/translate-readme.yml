@@ -3,7 +3,7 @@ name: Translate README to English
 on:
   push:
     paths:
-      - 'Mini-Agent-TS/README_CN.md' # 监听中文版源文件
+      - 'README_CN.md' # 监听中文版源文件
     branches:
       - main
       - master
@@ -46,7 +46,7 @@ jobs:
 
           try:
               # 读取源文件 (中文)
-              with open('Mini-Agent-TS/README_CN.md', 'r', encoding='utf-8') as f:
+              with open('README_CN.md', 'r', encoding='utf-8') as f:
                   content = f.read()
 
               system_prompt = \"\"\"
@@ -73,7 +73,7 @@ jobs:
               translated_content = response.choices[0].message.content
 
               # 写入目标文件 (英文，覆盖 README.md)
-              with open('Mini-Agent-TS/README.md', 'w', encoding='utf-8') as f:
+              with open('README.md', 'w', encoding='utf-8') as f:
                   f.write(translated_content)
               
               print('Translation successful.')
@@ -89,8 +89,8 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
           # 检查是否有变化
-          if [[ -n $(git status -s Mini-Agent-TS/README.md) ]]; then
-            git add Mini-Agent-TS/README.md
+          if [[ -n $(git status -s README.md) ]]; then
+            git add README.md
             git commit -m "docs: auto-translate README to English [skip ci]"
             git push
             echo "Successfully pushed translated README."
