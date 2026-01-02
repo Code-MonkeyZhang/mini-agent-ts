@@ -2,6 +2,8 @@
 
 # Mini-Agent (TypeScript 版) 快速启动指南
 
+> 本项目是 [Mini-Agent (Python 版)](https://github.com/MiniMax-AI/Mini-Agent) 的 TypeScript 实现版本。
+
 这是一个可以在你的终端（命令行）中运行的 AI 智能体，它能帮你读写文件、执行系统命令。
 
 ## 🛠️ 第一步：安装 Node.js
