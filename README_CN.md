@@ -31,8 +31,7 @@ _(安装完成后，请关闭并重新打开终端，输入 `node -v`。如果�
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/YourUsername/Mini-Agent.git
-
+https://github.com/Code-MonkeyZhang/Mini-Agent-TS.git
 # 2. 进入项目目录
 cd Mini-Agent/Mini-Agent-TS
 ```
