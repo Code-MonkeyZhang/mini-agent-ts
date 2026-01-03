@@ -2,13 +2,13 @@
 
 # Mini-Agent (TypeScript Edition) Quick Start Guide
 
-> This project is a TypeScript implementation of Minimax's open-source [Mini-Agent](https://github.com/MiniMax-AI/Mini-Agent).
+> This project is a TypeScript implementation of Minimax's open-source [Mini-Agent](https://github.com/MiniMax-AI/Mini-Agent) project.
 
 This is an AI agent that runs in your terminal (command line), capable of helping you read/write files and execute system commands.
 
 ## 🛠️ Step 1: Install Node.js
 
-Copy and run the corresponding command in your terminal (Terminal/PowerShell) based on your system:
+Copy and run the appropriate command for your system in Terminal/PowerShell:
 
 - **Windows** (PowerShell):
   ```powershell
@@ -27,21 +27,20 @@ _(After installation, close and reopen your terminal, then enter `node -v`. If y
 
 ## 📥 Step 2: Download the Code
 
-Run the following command in your terminal to clone the project locally:
+Execute the following commands in your terminal to clone the project locally:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/YourUsername/Mini-Agent.git
-
+https://github.com/Code-MonkeyZhang/Mini-Agent-TS.git
 # 2. Navigate to the project directory
 cd Mini-Agent/Mini-Agent-TS
 ```
 
-_(If Git is not installed on your computer, Windows users can run `winget install Git.Git`, and Mac users can run `brew install git`.)_
+_(If Git is not installed on your computer, Windows users can run `winget install Git.Git`, Mac users run `brew install git`)_
 
 ## ⚙️ Step 3: Install & Link
 
-Run the following two commands sequentially in your terminal to register the `mini-agent-ts` command in your system:
+Execute the following two commands sequentially in your terminal to register the `mini-agent-ts` command in your system:
 
 ```bash
 # 1. Install dependencies
@@ -55,12 +54,12 @@ npm run build && npm link
 
 You need to provide the AI with your credentials.
 
-1. Navigate to the `config` directory in the project folder.
-2. Copy `config-example.yaml` and rename it to `config.yaml`:
+1. Navigate to the `config` directory under the project folder.
+2. Make a copy of `config-example.yaml` and rename it to `config.yaml`:
    ```bash
    cp config/config-example.yaml config/config.yaml
    ```
-3. Open `config.yaml` with a text editor or code editor and modify the following key configurations:
+3. Open `config.yaml` with a text editor or code editor, and modify these key configurations:
 
 ```yaml
 # config/config.yaml
@@ -70,7 +69,7 @@ api_key: "YOUR_API_KEY_HERE" # Replace with your MiniMax API Key
 
 # API endpoint (choose based on your network environment)
 api_base: "https://api.minimax.io/anthropic" # For overseas users
-# api_base: "https://api.minimaxi.com"        # For domestic users
+# api_base: "https://api.minimaxi.com"        # For users in China
 
 # Model and provider
 model: "MiniMax-M2"
@@ -79,9 +78,9 @@ provider: "anthropic"
 
 ## 🚀 Step 5: Run
 
-Everything is ready! Now you can start the agent directly from **anywhere** in your terminal.
+Everything is ready! Now you can directly enter commands anywhere in your terminal to launch it.
 
-### 1. Basic Run
+### 1. Basic Execution
 
 Starts in the current directory by default:
 
@@ -91,7 +90,7 @@ mini-agent-ts
 
 ### 2. Specify Workspace
 
-You can have the Agent work in a specific directory, ensuring all created files are saved there without cluttering your current folder:
+You can make the Agent work in a specific directory, so all files it creates will be saved there without cluttering your current folder:
 
 ```bash
 # Windows
@@ -101,19 +100,19 @@ mini-agent-ts --workspace D:\MyProjects\TestAgent
 mini-agent-ts -w ./my-workspace
 ```
 
-You will see the welcome screen `🤖 Mini Agent`. Now you can give it instructions as if chatting with a person, for example:
+You'll see the welcome screen `🤖 Mini Agent`. Now you can give it instructions as if chatting with a person, for example:
 
-> "Please create a file named hello.txt in the current directory with a poem about programmers."
+> "Please create a file named hello.txt in the current directory containing a poem about programmers."
 
 ---
 
 ## 👨‍💻 Developer Guide
 
-If you want to contribute to development or debug the code, you can use the following commands:
+If you want to participate in development or debug the code, you can use the following commands:
 
-| Command          | Purpose                                                                                      |
-| :--------------- | :------------------------------------------------------------------------------------------- |
-| `npm run build`  | **Build Project**: Compiles TypeScript source code into JavaScript (outputs to `dist/`).     |
-| `npm run dev`    | **Run in Dev Mode**: Uses `tsx` to run source code directly without manual compilation; changes take effect immediately—ideal for debugging. |
-| `npm run start`  | **Run in Production Mode**: Executes compiled code (requires `build` first).                |
-| `npm test`       | **Run Tests**: Executes Vitest unit tests.                                                   |
+| Command         | Purpose                                                                                     |
+| :-------------- | :------------------------------------------------------------------------------------------ |
+| `npm run build` | **Build Project**: Compiles TypeScript source code into JavaScript (output to `dist/`).     |
+| `npm run dev`   | **Run in Dev Mode**: Uses `tsx` to directly execute source code without manual compilation, ideal for debugging with instant updates. |
+| `npm run start` | **Run in Production Mode**: Executes compiled code (requires running `build` first).        |
+| `npm test`      | **Run Tests**: Executes Vitest unit tests.                                                  |
