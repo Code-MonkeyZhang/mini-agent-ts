@@ -44,3 +44,6 @@ gha-creds-*.json
 
 #agent
 agent_memory
+
+# Config
+config/config.yaml
