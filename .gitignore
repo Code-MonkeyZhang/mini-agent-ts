@@ -47,3 +47,4 @@ agent_memory
 
 # Config
 config/config.yaml
+config/mcp.json
