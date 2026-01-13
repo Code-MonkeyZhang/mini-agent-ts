@@ -35,18 +35,10 @@ export class LLMClient {
 
     switch (provider) {
       case LLMProvider.ANTHROPIC:
-        // Treat `api_base` as a fully-qualified base URL (do not auto-append suffixes).
-        fullApiBase = apiBase.replace(/\/+$/, "");
-        this._client = new OpenAIClient(
-          apiKey,
-          fullApiBase,
-          model,
-          retryConfig
-        );
-        break;
+        //TODO implement ANTHROPIC provider
+        throw new Error(`Unsupported provider: ${provider}`);
 
       case LLMProvider.OPENAI:
-        // Treat `api_base` as a fully-qualified base URL (do not auto-append suffixes).
         fullApiBase = apiBase.replace(/\/+$/, "");
         this._client = new OpenAIClient(
           apiKey,
