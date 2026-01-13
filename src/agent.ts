@@ -182,7 +182,7 @@ export class Agent {
         const result = await this.executeTool(functionName, args);
 
         if (result.success) {
-          console.log(`✓ Tool use success`);
+          console.log(`✅ Tool use success`);
         } else {
           console.log(`✗ Error: ${result.error ?? "Unknown error"}`);
         }
