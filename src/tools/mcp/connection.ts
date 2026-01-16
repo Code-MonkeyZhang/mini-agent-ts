@@ -1,10 +1,11 @@
 import { Logger } from "../../util/logger.js";
-import { type Tool, type ToolInput, type ToolResult, type JsonSchema } from "../base.js";
 import {
-  type Closable,
-  type ConnectionType,
-  type McpClient,
-} from "./types.js";
+  type Tool,
+  type ToolInput,
+  type ToolResult,
+  type JsonSchema,
+} from "../base.js";
+import { type Closable, type ConnectionType, type McpClient } from "./types.js";
 import {
   getMcpTimeoutConfig,
   loadClientConstructor,
@@ -215,14 +216,6 @@ export class MCPServerConnection {
           tool.description ?? ""
         );
 
-        // Debug: Log schema normalization for first few tools
-        if (this.tools.length < 3) {
-          Logger.debug("MCP DEBUG", `📋 Normalized tool '${tool.name}':`, {
-            originalSchema: rawParameters,
-            normalizedSchema: normalizedParameters,
-          });
-        }
-
         this.tools.push(
           new MCPTool({
             name: tool.name,
@@ -234,8 +227,7 @@ export class MCPServerConnection {
         );
       }
 
-      const connInfo = this.url ?? this.command ?? "unknown";
-      const connectedMsg = `✅ Connected to MCP server '${this.name}' (${this.connectionType}: ${connInfo}) - loaded ${this.tools.length} tools`;
+      const connectedMsg = `✅ Connected to MCP server '${this.name}' (${this.connectionType}) - loaded ${this.tools.length} tools`;
       console.log(connectedMsg);
       Logger.log("MCP", connectedMsg);
 

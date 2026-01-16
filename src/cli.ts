@@ -177,17 +177,26 @@ async function runAgent(workspaceDir: string): Promise<void> {
     onRetry
   );
 
+  // Check connection
+  process.stdout.write("Checking API connection... ");
+  const isConnected = await llmClient.checkConnection();
+  if (isConnected) {
+    console.log("✅ OK");
+  } else {
+    console.log("❌ Failed (Check API Key/Network)");
+  }
+
   // Load system prompt
   let systemPrompt: string;
   let systemPromptPath = Config.findConfigFile(config.agent.systemPromptPath);
   if (systemPromptPath && fs.existsSync(systemPromptPath)) {
     systemPrompt = fs.readFileSync(systemPromptPath, "utf-8");
-    console.log(`✅ Loaded system prompt (from: ${systemPromptPath})`);
   } else {
     systemPrompt =
       "You are Mini-Agent, an intelligent assistant powered by MiniMax M2 that can help users complete various tasks.";
     console.log("⚠️  System prompt not found, using default");
   }
+  Logger.log("startup", "System Prompt Content:", systemPrompt);
 
   // Load Tools & MCPs
   const tools: Tool[] = [];

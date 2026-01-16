@@ -73,4 +73,15 @@ export class LLMClient {
   ): AsyncGenerator<LLMStreamChunk> {
     yield* this._client.generateStream(messages, tools);
   }
+
+  async checkConnection(): Promise<boolean> {
+    try {
+      const msgs: Message[] = [{ role: "user", content: "ping" }];
+      const generator = this._client.generateStream(msgs, null);
+      await generator.next();
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
 }
