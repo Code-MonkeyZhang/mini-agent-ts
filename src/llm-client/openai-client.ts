@@ -300,7 +300,7 @@ export class OpenAIClient extends LLMClientBase {
 
       yield {
         content: delta?.content || undefined,
-        thinking: (delta as any)?.reasoning_content || undefined,
+        thinking: (delta as any)?.reasoning || undefined,
         tool_calls: toolCalls,
         done: finishReason !== null && finishReason !== undefined,
         finish_reason: finishReason || undefined,
