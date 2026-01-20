@@ -12,3 +12,8 @@ https://agentskills.io/home
 
 Silicon Flow:
 https://docs.siliconflow.cn/cn/api-reference/chat-completions/chat-completions
+Debug Issues:
+- Thinking content not captured in streaming response
+  - OpenAI API returns thinking content in 'reasoning' field, not 'reasoning_content'
+  - Fixed in src/llm-client/openai-client.ts:303
+  - Reference: OpenAI documentation (要参考 OpenAI 的文档)
