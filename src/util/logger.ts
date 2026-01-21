@@ -1,16 +1,18 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 
 export class Logger {
   private static logFile: string | null = null;
 
-  static initialize(logDir: string = "logs") {
-    if (!fs.existsSync(logDir)) {
-      fs.mkdirSync(logDir, { recursive: true });
+  static initialize(logDir?: string) {
+    const logsDir = logDir ?? path.join(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", ".."), "logs");
+    if (!fs.existsSync(logsDir)) {
+      fs.mkdirSync(logsDir, { recursive: true });
     }
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    this.logFile = path.join(logDir, `agent-${timestamp}.log`);
-    console.log(`📝 Logging to file: ${this.logFile}`);
+    this.logFile = path.join(logsDir, `agent-${timestamp}.log`);
+    console.log(`Logging to file: ${this.logFile}`);
   }
 
   static log(category: string, message: string, data?: any) {
@@ -23,8 +25,6 @@ export class Logger {
       fs.appendFileSync(this.logFile, fileEntry);
     }
 
-    // Console logging removed as per user request to reduce noise
-    // console.log(`[${category}] ${message}`, data ? formattedData : "");
   }
 
   static debug(category: string, message: string, data?: any) {

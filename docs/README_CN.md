@@ -74,6 +74,9 @@ api_base: "https://api.minimax.io/anthropic" # 海外用户
 # 模型和提供商
 model: "MiniMax-M2"
 provider: "anthropic"
+
+# 日志配置（可选）
+enableLogging: false # 设置为 true 以启用文件日志，日志将保存在项目根目录的 logs/ 文件夹下
 ```
 
 ## 🚀 第五步：运行

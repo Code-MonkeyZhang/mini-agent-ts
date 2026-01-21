@@ -21,6 +21,7 @@ import {
 import { Logger } from "./util/logger.js";
 
 import { Agent } from "./agent.js";
+
 // ============ Utilities ============
 
 function getProjectVersion(): string {
@@ -105,13 +106,22 @@ function resolveWorkspace(args: { workspace: string | undefined }): string {
 
 async function runAgent(workspaceDir: string): Promise<void> {
   // Load Workspace dir
-  const configPath = Config.getDefaultConfigPath();
+  const configPath = Config.findConfigFile("config.yaml");
+  if (!configPath) {
+    console.error("❌ Configuration file not found. Please run setup.");
+    process.exit(1);
+  }
   const config = Config.fromYaml(configPath);
   console.log(`Config loaded from: ${configPath}`);
   console.log(`Workspace: ${workspaceDir}`);
 
+  if (config.logging.enableLogging) {
+    Logger.initialize();
+  }
+
   printBanner();
-  console.log(`Model: ${config.llm.model}, Provider: ${config.llm.provider}`);
+  console.log(`Model: ${config.llm.model}`)
+  console.log(`Provider: ${config.llm.provider}`)  
   console.log(`Base URL: ${config.llm.apiBase}`);
   console.log(`Type 'exit' to quit\n`);
 
@@ -149,7 +159,7 @@ async function runAgent(workspaceDir: string): Promise<void> {
   let systemPromptPath = Config.findConfigFile(config.agent.systemPromptPath);
   if (systemPromptPath && fs.existsSync(systemPromptPath)) {
     systemPrompt = fs.readFileSync(systemPromptPath, "utf-8");
-    console.log(`✅ Loaded system prompt (from: ${systemPromptPath})`);
+    console.log(`✅ Loaded system prompt`);
   } else {
     systemPrompt =
       "You are Mini-Agent, an intelligent assistant powered by MiniMax M2 that can help users complete various tasks.";
@@ -216,11 +226,7 @@ async function runAgent(workspaceDir: string): Promise<void> {
   let interrupted = false;
   const onSigint = (): void => {
     interrupted = true;
-    try {
-      rl.close();
-    } catch {
-      // ignore
-    }
+    rl.close();
   };
   process.once("SIGINT", onSigint);
 
@@ -266,16 +272,11 @@ async function runAgent(workspaceDir: string): Promise<void> {
     // Graceful Shutdown
     process.removeListener("SIGINT", onSigint);
     rl.close();
-    try {
-      await cleanupMcpConnections();
-    } catch (error) {
-      console.log(`⚠️  Error during MCP cleanup: ${String(error)}`);
-    }
+    await cleanupMcpConnections();
   }
 }
 
 export async function run(): Promise<void> {
-  Logger.initialize("logs");
   const args = parseArgs();
 
   let workspaceDir: string;

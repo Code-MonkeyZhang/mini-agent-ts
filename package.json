@@ -13,7 +13,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "typecheck": "tsc --noEmit",
-    "preflight": "npm run typecheck && npm run test:run"
+    "preflight": "npm run build && npm run test:run && npm link"
   },
   "devDependencies": {
     "@types/node": "^24.10.2",
@@ -25,6 +25,7 @@
     "@modelcontextprotocol/sdk": "^1.1.0",
     "commander": "^14.0.2",
     "openai": "^6.10.0",
-    "yaml": "^2.8.2"
+    "yaml": "^2.8.2",
+    "zod": "^4.3.5"
   }
 }

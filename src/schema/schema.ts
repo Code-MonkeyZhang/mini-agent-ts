@@ -7,7 +7,7 @@ export enum LLMProvider {
 
 // ============ Function Calling ============
 
-export interface FunctionCall {
+interface FunctionCall {
   name: string;
   arguments: Record<string, unknown>;
 }
@@ -20,46 +20,38 @@ export interface ToolCall {
 
 // ============ Messages ============
 
-export interface Message {
-  role: "system" | "user" | "assistant" | "tool";
-  content: string | ContentBlock[]; // Either a plain string or an array of content blocks
-  thinking?: string | null; // Extra reasoning/thinking content for assistant messages
-  tool_calls?: ToolCall[] | null;
-  tool_call_id?: string | null;
-  name?: string | null; // Used for tool role messages
-}
+export type Message =
+  | {
+      role: "system";
+      content: string;
+    }
+  | {
+      role: "user";
+      content: string | ContentBlock[];
+    }
+  | {
+      role: "assistant";
+      content?: string;
+      thinking?: string;
+      tool_calls?: ToolCall[];
+    }
+  | {
+      role: "tool";
+      content: string;
+      tool_call_id: string;
+      name?: string;
+    };
 
-export interface ContentBlock {
+interface ContentBlock {
   type: string;
   text?: string;
   [key: string]: unknown;
 }
-
-// ============ Token Usage ============
-
-export interface TokenUsage {
-  prompt_tokens: number;
-  completion_tokens: number;
-  total_tokens: number;
-}
-
-// ============ LLM Response ============
-
-export interface LLMResponse {
-  content: string;
-  thinking?: string | null; // Optional thinking content
-  tool_calls?: ToolCall[] | null;
-  finish_reason: string;
-  usage?: TokenUsage | null;
-}
-
-// ============ Streaming ============
 
 export interface LLMStreamChunk {
   content?: string;
   thinking?: string;
   tool_calls?: ToolCall[];
   finish_reason?: string;
-  usage?: TokenUsage;
   done: boolean;
 }
