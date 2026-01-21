@@ -74,6 +74,9 @@ api_base: "https://api.minimax.io/anthropic" # For overseas users
 # Model and provider
 model: "MiniMax-M2"
 provider: "anthropic"
+
+# Logging configuration (optional)
+enableLogging: false # Set to true to enable file logging to project-root/logs/
 ```
 
 ## 🚀 Step 5: Run
