@@ -30,4 +30,12 @@ export class Logger {
   static debug(category: string, message: string, data?: any) {
     this.log(category, message, data);
   }
+
+  static logLLMRequest(request: any) {
+    this.log("LLM REQUEST", "Full Request JSON", request);
+  }
+
+  static logLLMResponse(response: any) {
+    this.log("LLM RESPONSE", "Full Response Data", response);
+  }
 }

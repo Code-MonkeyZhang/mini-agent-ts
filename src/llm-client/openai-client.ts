@@ -202,15 +202,7 @@ export class OpenAIClient extends LLMClientBase {
       stream = await asyncRetry(
         async () => {
           const params = buildParams();
-          Logger.debug(
-            "LLM DEBUG",
-            `➡️ Sending Streaming Request to ${this.model}:`,
-            {
-              messagesCount: params.messages.length,
-              toolsCount: (params as any).tools?.length ?? 0,
-              lastMessage: params.messages[params.messages.length - 1],
-            }
-          );
+          Logger.logLLMRequest(params);
           return await this.client.chat.completions.create(params);
         },
         this.retryConfig,
@@ -218,15 +210,7 @@ export class OpenAIClient extends LLMClientBase {
       );
     } else {
       const params = buildParams();
-      Logger.debug(
-        "LLM DEBUG",
-        `➡️ Sending Streaming Request to ${this.model}:`,
-        {
-          messagesCount: params.messages.length,
-          toolsCount: (params as any).tools?.length ?? 0,
-          lastMessage: params.messages[params.messages.length - 1],
-        }
-      );
+      Logger.logLLMRequest(params);
       stream = await this.client.chat.completions.create(params);
     }
 
@@ -241,9 +225,32 @@ export class OpenAIClient extends LLMClientBase {
       }
     >();
 
+    let fullContent = "";
+    let fullThinking = "";
+    let finalFinishReason: string | undefined;
+    let finalToolCalls: ToolCall[] | undefined;
+    let chunkCount = 0;
+
     for await (const chunk of stream) {
       const delta = chunk.choices[0]?.delta;
       const finishReason = chunk.choices[0]?.finish_reason;
+
+      chunkCount++;
+
+      // Accumulate content
+      if (delta?.content) {
+        fullContent += delta.content;
+      }
+
+      // Accumulate thinking
+      if ((delta as any)?.reasoning) {
+        fullThinking += (delta as any).reasoning;
+      }
+
+      // Track finish reason
+      if (finishReason) {
+        finalFinishReason = finishReason;
+      }
 
       // Accumulate tool_calls from delta
       if (delta && (delta as any).tool_calls) {
@@ -271,9 +278,8 @@ export class OpenAIClient extends LLMClientBase {
       }
 
       // Build final tool_calls when stream is done
-      let toolCalls: ToolCall[] | undefined;
       if (finishReason && toolCallAcc.size > 0) {
-        toolCalls = Array.from(toolCallAcc.values()).map((call) => {
+        finalToolCalls = Array.from(toolCallAcc.values()).map((call) => {
           let parsedArgs: Record<string, unknown> = {};
           if (call.argumentsText) {
             try {
@@ -291,20 +297,25 @@ export class OpenAIClient extends LLMClientBase {
             },
           };
         });
-        Logger.debug(
-          "LLM DEBUG",
-          `⬅️ Received Tool Calls (Streaming):`,
-          toolCalls
-        );
       }
 
       yield {
         content: delta?.content || undefined,
         thinking: (delta as any)?.reasoning || undefined,
-        tool_calls: toolCalls,
+        tool_calls: finalToolCalls,
         done: finishReason !== null && finishReason !== undefined,
         finish_reason: finishReason || undefined,
       };
     }
+
+    // Log full response after stream completes
+    const fullResponse = {
+      accumulatedContent: fullContent,
+      accumulatedThinking: fullThinking,
+      tool_calls: finalToolCalls || null,
+      finishReason: finalFinishReason,
+      chunkCount: chunkCount,
+    };
+    Logger.logLLMResponse(fullResponse);
   }
 }

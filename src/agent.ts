@@ -152,12 +152,6 @@ export class Agent {
         console.log();
       }
 
-      Logger.log("CHAT", "Assistant:", {
-        content: fullContent,
-        thinking: fullThinking || null,
-        tool_calls: toolCalls
-      });
-
       this.messages.push({
         role: "assistant",
         content: fullContent,
