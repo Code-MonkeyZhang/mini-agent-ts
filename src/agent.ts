@@ -206,7 +206,7 @@ export class Agent {
             ? result.content
             : `Error: ${result.error ?? "Unknown error"}`,
           tool_call_id: toolCallId,
-          name: functionName,
+          tool_name: functionName,
         });
       }
     }

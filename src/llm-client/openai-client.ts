@@ -4,7 +4,7 @@ import type { Tool } from "../tools/index.js";
 import { toOpenAISchema } from "../tools/index.js";
 import { LLMClientBase } from "./base.js";
 import type { RetryConfig } from "../config.js";
-import { Logger, openAILoggerAdapter } from "../util/logger.js";
+import { Logger, sdkLoggerAdapter } from "../util/logger.js";
 
 /**
  * LLM client using OpenAI's protocol.
@@ -26,7 +26,7 @@ export class OpenAIClient extends LLMClientBase {
       apiKey: apiKey,
       baseURL: apiBase,
       maxRetries: retryConfig.enabled ? retryConfig.maxRetries : 0,
-      logger: openAILoggerAdapter,
+      logger: sdkLoggerAdapter,
     });
   }
 
@@ -80,8 +80,8 @@ export class OpenAIClient extends LLMClientBase {
           tool_call_id: msg.tool_call_id,
         };
 
-        if (msg.name) {
-          toolMsg["name"] = msg.name;
+        if (msg.tool_name) {
+          toolMsg["name"] = msg.tool_name;
         }
         apiMessages.push(toolMsg);
       }
