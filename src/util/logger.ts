@@ -39,3 +39,18 @@ export class Logger {
     this.log("LLM RESPONSE", "Full Response Data", response);
   }
 }
+
+export const openAILoggerAdapter = {
+  debug(message: string, ...args: unknown[]) {
+    Logger.log("OPENAI SDK", message, args.length > 0 ? args : undefined);
+  },
+  info(message: string, ...args: unknown[]) {
+    Logger.log("OPENAI SDK", message, args.length > 0 ? args : undefined);
+  },
+  warn(message: string, ...args: unknown[]) {
+    Logger.log("OPENAI SDK WARN", message, args.length > 0 ? args : undefined);
+  },
+  error(message: string, ...args: unknown[]) {
+    Logger.log("OPENAI SDK ERROR", message, args.length > 0 ? args : undefined);
+  },
+};

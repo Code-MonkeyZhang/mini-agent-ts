@@ -4,8 +4,7 @@ import type { Tool } from "../tools/index.js";
 import { toOpenAISchema } from "../tools/index.js";
 import { LLMClientBase } from "./base.js";
 import type { RetryConfig } from "../config.js";
-import { asyncRetry } from "../retry.js";
-import { Logger } from "../util/logger.js";
+import { Logger, openAILoggerAdapter } from "../util/logger.js";
 
 /**
  * LLM client using OpenAI's protocol.
@@ -26,6 +25,8 @@ export class OpenAIClient extends LLMClientBase {
     this.client = new OpenAI({
       apiKey: apiKey,
       baseURL: apiBase,
+      maxRetries: retryConfig.enabled ? retryConfig.maxRetries : 0,
+      logger: openAILoggerAdapter,
     });
   }
 
@@ -197,22 +198,10 @@ export class OpenAIClient extends LLMClientBase {
         return params;
       };
 
-    // Use retry depending on `enabled`
-    if (this.retryConfig.enabled) {
-      stream = await asyncRetry(
-        async () => {
-          const params = buildParams();
-          Logger.logLLMRequest(params);
-          return await this.client.chat.completions.create(params);
-        },
-        this.retryConfig,
-        this.retryCallback
-      );
-    } else {
-      const params = buildParams();
-      Logger.logLLMRequest(params);
-      stream = await this.client.chat.completions.create(params);
-    }
+    // Create stream request (retry is handled by OpenAI SDK)
+    const params = buildParams();
+    Logger.logLLMRequest(params);
+    stream = await this.client.chat.completions.create(params);
 
     // Accumulate tool_calls from streaming chunks (like Python does)
     const toolCallAcc = new Map<

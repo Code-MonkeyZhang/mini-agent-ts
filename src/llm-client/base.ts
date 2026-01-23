@@ -6,7 +6,6 @@ export abstract class LLMClientBase {
   public apiBase: string;
   public model: string;
   public retryConfig: RetryConfig;
-  public retryCallback: ((error: unknown, attempt: number) => void) | null;
 
   /**
    * Initialize the LLM client.
@@ -26,7 +25,6 @@ export abstract class LLMClientBase {
     this.apiBase = apiBase;
     this.model = model;
     this.retryConfig = retryConfig ?? Config.createDefaultRetryConfig();
-    this.retryCallback = null;
   }
 
   /**

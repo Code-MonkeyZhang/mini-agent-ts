@@ -24,8 +24,7 @@ export class LLMClient {
     apiBase: string,
     provider: string,
     model: string,
-    retryConfig: RetryConfig,
-    retryCallback?: (error: unknown, attempt: number) => void
+    retryConfig: RetryConfig
   ) {
     this.apiKey = apiKey;
     this.provider = provider;
@@ -54,17 +53,6 @@ export class LLMClient {
     }
 
     this.apiBase = fullApiBase;
-
-    if (retryCallback) {
-      this._client.retryCallback = retryCallback;
-    }
-  }
-
-  /**
-   * Set retry callback.
-   */
-  set retryCallback(value: (error: unknown, attempt: number) => void) {
-    this._client.retryCallback = value;
   }
 
   async *generateStream(
