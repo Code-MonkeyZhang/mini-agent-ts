@@ -1,4 +1,5 @@
 import type { Message, LLMStreamChunk } from "../schema/index.js";
+import type { Tool } from "../tools/index.js";
 import { Config, type RetryConfig } from "../config.js";
 
 export abstract class LLMClientBase {
@@ -36,7 +37,7 @@ export abstract class LLMClientBase {
    */
   public abstract generateStream(
     messages: Message[],
-    tools?: unknown[] | null
+    tools?: Tool[] | null
   ): AsyncGenerator<LLMStreamChunk>;
 
   /**
@@ -48,7 +49,7 @@ export abstract class LLMClientBase {
    */
   public abstract prepareRequest(
     messages: Message[],
-    tools?: unknown[] | null
+    tools?: Tool[] | null
   ): Record<string, any>;
 
   /**

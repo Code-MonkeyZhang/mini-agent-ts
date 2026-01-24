@@ -3,10 +3,11 @@ import {
   type LLMStreamChunk,
   type Message,
 } from "../schema/schema.js";
+import type { Tool } from "../tools/index.js";
 import { LLMClientBase } from "./llm-client-base.js";
 import { OpenAIClient } from "./openai-client.js";
-// If you have an AnthropicClient implementation:
-// import { AnthropicClient } from "./anthropic-client.js";
+import { AnthropicClient } from "./anthropic-client.js";
+
 import type { RetryConfig } from "../config.js";
 
 export class LLMClient {
@@ -35,8 +36,14 @@ export class LLMClient {
 
     switch (provider) {
       case LLMProvider.ANTHROPIC:
-        //TODO implement ANTHROPIC provider
-        throw new Error(`Unsupported provider: ${provider}`);
+        fullApiBase = apiBase.replace(/\/+$/, "");
+        this._client = new AnthropicClient(
+          apiKey,
+          fullApiBase,
+          model,
+          retryConfig
+        );
+        break;
 
       case LLMProvider.OPENAI:
         fullApiBase = apiBase.replace(/\/+$/, "");
@@ -57,7 +64,7 @@ export class LLMClient {
 
   async *generateStream(
     messages: Message[],
-    tools?: any[] | null
+    tools?: Tool[] | null
   ): AsyncGenerator<LLMStreamChunk> {
     yield* this._client.generateStream(messages, tools);
   }

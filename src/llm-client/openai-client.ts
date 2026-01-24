@@ -1,7 +1,6 @@
 import OpenAI from "openai";
 import type { Message, LLMStreamChunk, ToolCall } from "../schema/index.js";
 import type { Tool } from "../tools/index.js";
-import { toOpenAISchema } from "../tools/index.js";
 import { LLMClientBase } from "./llm-client-base.js";
 import type { RetryConfig } from "../config.js";
 import { Logger, sdkLoggerAdapter } from "../util/logger.js";
@@ -91,55 +90,22 @@ export class OpenAIClient extends LLMClientBase {
   }
 
   /**
-   * Converts various tool formats to OpenAI's schema.
+   * Converts internal Tool format to OpenAI's schema.
    *
-   * @param tools List of tools in mixed formats
+   * @param tools List of internal Tool objects
    * @returns List of tools formatted for OpenAI API
-   * @throws {TypeError} If a tool format is unrecognized
    */
-  private convertTools(tools: unknown[]): Record<string, any>[] {
-    const converted: Record<string, any>[] = [];
-
-    for (const tool of tools) {
-      if (tool && typeof tool === "object") {
-        const toolObj = tool as Record<string, any>;
-
-        const toolType = toolObj["type"];
-        if (toolType === "function" && toolObj["function"]) {
-          converted.push(toolObj);
-          continue;
-        }
-
-        if (
-          toolObj["input_schema"] &&
-          toolObj["name"] &&
-          toolObj["description"]
-        ) {
-          converted.push({
-            type: "function",
-            function: {
-              name: toolObj["name"],
-              description: toolObj["description"],
-              parameters: toolObj["input_schema"],
-            },
-          });
-          continue;
-        }
-
-        if (
-          toolObj["name"] &&
-          toolObj["description"] &&
-          toolObj["parameters"]
-        ) {
-          converted.push(toOpenAISchema(toolObj as Tool));
-          continue;
-        }
-      }
-
-      throw new TypeError(`Unsupported tool type: ${typeof tool}`);
-    }
-
-    return converted;
+  private convertTools(
+    tools: Tool[]
+  ): OpenAI.Chat.Completions.ChatCompletionTool[] {
+    return tools.map((tool) => ({
+      type: "function" as const,
+      function: {
+        name: tool.name,
+        description: tool.description,
+        parameters: tool.parameters as OpenAI.FunctionParameters,
+      },
+    }));
   }
 
   /**
@@ -151,7 +117,7 @@ export class OpenAIClient extends LLMClientBase {
    */
   public override prepareRequest(
     messages: Message[],
-    tools?: unknown[] | null
+    tools?: Tool[] | null
   ): Record<string, any> {
     const [, apiMessages] = this.convertMessages(messages);
     return {
@@ -169,7 +135,7 @@ export class OpenAIClient extends LLMClientBase {
    */
   public override async *generateStream(
     messages: Message[],
-    tools?: any[] | null
+    tools?: Tool[] | null
   ): AsyncGenerator<LLMStreamChunk> {
     const requestParams = this.prepareRequest(messages, tools);
     const apiMessages = requestParams[
