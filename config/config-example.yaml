@@ -27,7 +27,7 @@ tools:
   enableBash: true
   enableNote: true
   enableSkills: true
-  skillsDir: "./skills"
+  skillsDir: "./skills-example"
   enableMcp: true
   mcpConfigPath: "mcp.json"
   mcp:
