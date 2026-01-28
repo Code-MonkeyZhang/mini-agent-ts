@@ -23,9 +23,8 @@ retry:
 
 # ===== Tools Configuration =====
 tools:
-  enableSkills: true      # Enable Agent Skills (see README for details)
-  skillsDir: "./skills"   # Directory containing skills (each skill is a folder with SKILL.md)
-  mcpConfigPath: "mcp.json"  # MCP configuration file path
+  skillsDir: "./skills" # Directory containing skills (each skill is a folder with SKILL.md)
+  mcpConfigPath: "mcp.json" # MCP configuration file path
   mcp:
     connectTimeout: 10.0
     executeTimeout: 60.0

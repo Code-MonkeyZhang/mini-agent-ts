@@ -1,42 +1,88 @@
-[English](./README.md) | [中文](./README_CN.md)
+<h1 align="center"> Mini-Agent-TS</h1>
 
-# Mini-Agent (TypeScript 版) 快速启动指南
+<p align="center">
+  <img src="https://img.shields.io/github/last-commit/Code-MonkeyZhang/Mini-Agent-TS?color=ff69b4" alt="last commit">
+  <img src="https://img.shields.io/badge/Language-TypeScript-blue.svg" alt="typescript">
+  <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="license">
+  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome">
+</p>
 
-> 本项目是 Minimax 开源的[Mini-Agent](https://github.com/MiniMax-AI/Mini-Agent) 项目的 TypeScript 实现版本。
+<p align="center">
+  <a href="./README.md">English</a> | <a href="./README_CN.md">简体中文</a>
+</p>
 
-这是一个终端 LLM Agent，支持通过 Agent Skills 和 MCP 扩展能力，兼容 Anthropic 和 OpenAI 协议. 包含基础的文件操作和命令行执行的功能.
+> 本项目是基于 MiniMax 开源的 [Mini-Agent](https://github.com/MiniMax-AI/Mini-Agent) 项目的 TypeScript 实现版本。
 
-## Quick Start
+**Mini-Agent-TS** 是一个简单的终端 LLM Agent，支持通过 **Agent Skills** 和 **MCP (Model Context Protocol)** 扩展能力。它不仅兼容 Anthropic 和 OpenAI 协议，还具备原生文件操作与命令行执行的能力，是开发者在终端环境下的全能 AI 助手。
 
-在终端中执行以下命令将项目克隆到本地：
+---
 
-```bash
-# 1. 克隆仓库
-https://github.com/Code-MonkeyZhang/Mini-Agent-TS.git
-# 2. 进入项目目录
-cd Mini-Agent/Mini-Agent-TS
+## ✨ 核心特性
+
+- 🔄 **ReAct 模式**: 支持 ReAct 的 Agent 循环机制，能进行多步推理并循环调用多种工具完成复杂任务。
+- 🧠 **交错思维链**: 使 Agent 的推理过程与工具调用紧密结合。
+- 🔌 **MCP 协议支持**: 轻松连接外部工具生态，扩展 Agent 功能。
+- 🛠️ **Agent Skills**: 支持通过专业知识库、工作流和工具集来自定义 Agent 技能，打造领域专家。
+- 🌐 **自定义供应商**: 支持 Anthropic 和 OpenAI SDK，自由接入任何兼容协议的 LLM 供应商。
+
+---
+
+## 📂 项目结构
+
+```
+Mini-Agent-TS/
+├── src/
+│   ├── agent.ts           # Agent 核心逻辑
+│   ├── cli.ts             # 命令行入口
+│   ├── config.ts          # 配置加载与解析
+│   ├── llm-client/        # LLM 客户端适配器
+│   ├── schema/            # 数据模型定义
+│   ├── skills/            # 技能加载器
+│   ├── tools/             # 内置工具集
+│   └── util/
+├── config/
+│   ├── config.yaml        # 主配置文件
+│   └── mcp.json           # MCP 服务器配置
+├── skills/                # 用户自定义技能目录
+├── tests/                 # 测试文件
+└── logs/                  # 运行日志（启用日志时生成）
 ```
 
-在终端中依次执行以下两条命令，这会将 `mini-agent-ts` 命令注册到你的系统中：
+---
+
+## 🛠️ 快速上手
+
+### 1.克隆项目并安装依赖
+
+在终端执行以下命令将项目部署到本地：
 
 ```bash
-# 1. 安装依赖
-npm install
+# 克隆仓库
+git clone [https://github.com/Code-MonkeyZhang/Mini-Agent-TS.git](https://github.com/Code-MonkeyZhang/Mini-Agent-TS.git)
 
-# 2. 编译并链接到系统命令
+# 进入项目目录
+cd Mini-Agent-TS
+
+# 安装依赖
+npm install
+```
+
+### 2.安装项目并链接到系统全局命令
+
+```bash
 npm run build && npm link
 ```
 
-### 配置项目
+## 项目配置
 
-1. 进入项目文件夹下的 `config` 目录。
-2. 将 `config-example.yaml` 复制一份并重命名为 `config.yaml`：
-   ```bash
-   cp config/config-example.yaml config/config.yaml
-   ```
-3. 用记事本或代码编辑器打开 `config.yaml`，修改以下关键配置：
+初始化配置文件以填入你的 API 信息：
 
-```yaml
+```bash
+# 复制示例配置
+cp config/config-example.yaml config/config.yaml
+```
+
+```bash
 # config/config.yaml
 
 # 填入你的 API Key
@@ -51,46 +97,14 @@ provider: "anthropic" # "anthropic" 或 "openai"
 enableLogging: false # 设置为 true 以启用日志记录功能，日志将保存在项目根目录的 logs/ 文件夹下
 ```
 
-### 运行
+### 指定工作空间
 
-一切就绪！现在你可以在终端的**任何位置**直接输入命令来启动。
+如果你希望 Agent 仅在特定项目目录下操作（防止误删或误改其他文件），请使用：
 
-```bash
-mini-agent-ts
-```
+## 🔌 MCP 服务器
 
-### 2. 指定工作空间 (Workspace)
-
-你可以让 Agent 在特定目录下工作，这样它创建的文件都会保存在那里，不会弄乱你的当前文件夹：
-
-```bash
-mini-agent-ts -workspace ./my-workspace
-```
-
----
-
-## MCP (Model Context Protocol) 支持
-
-Mini-Agent-TS 支持 MCP 协议，通过配置文件连接外部工具。
-
-### 配置
-
-在 `config.yaml` 中指定 MCP 配置文件路径（默认为 `mcp.json`）：
-
-```yaml
-tools:
-  mcpConfigPath: "mcp.json"
-```
-
-### 示例
-
-复制示例配置文件：
-
-```bash
-cp config/mcp-example.json config/mcp.json
-```
-
-然后编辑 `config/mcp.json` 添加你的 MCP 服务器：
+本项目支持通过 MCP 协议给 Agent 添加外部工具。下面示例展示如何添加一个 time server：
+编辑 config/mcp.json：
 
 ```json
 {
@@ -98,38 +112,25 @@ cp config/mcp-example.json config/mcp.json
     "time-server": {
       "command": "uvx",
       "args": ["mcp-server-time"],
-      "description": "提供时间工具的服务器"
+      "description": "提供当前时间查询工具"
     }
   }
 }
 ```
 
----
+## 🧠 Agent Skills
 
-## Agent Skill
+本项目支持 Agent Skills, 允许用户为 Agent 加入特定功能的“操作手册”。为了加入skill,你需要在项目根目录或指定位置创建 skills 目录。将Skill文件放入该目录。同时确保 config.yaml 中启用了正确的skill路径：
 
-Mini-Agent 支持 **Agent Skill** - 通过专业知识、工作流程和工具扩展 Agent 的能力。
-
-### 创建技能目录
-
-在你的项目中或指定位置创建一个 `skills` 目录：
-
-````bash
-# 创建 skills 目录
-mkdir skills
-
-### 示例技能
-
-你可以在 [`skills-example`](./skills-example/) 目录中找到示例技能。
-
----
-
-### 启用技能
-
-技能默认已启用。如有需要，你可以在 `config.yaml` 中配置：
-
-```yaml
+```bash
 tools:
-  enableSkills: true
-  skillsDir: "./skills" # skill文件保存的路径
-````
+  skillsDir: "./skills"
+```
+
+---
+
+## 🤝 贡献与反馈
+
+欢迎提交 Issue 或 Pull Request 来完善这个项目。
+
+### Made with ❤️ by Code-MonkeyZhang
