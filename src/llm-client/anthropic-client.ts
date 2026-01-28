@@ -1,10 +1,10 @@
-import Anthropic from "@anthropic-ai/sdk";
-import type { Message, LLMStreamChunk, ToolCall } from "../schema/schema.js";
-import type { Tool } from "../tools/index.js";
+import Anthropic from '@anthropic-ai/sdk';
+import type { Message, LLMStreamChunk, ToolCall } from '../schema/schema.js';
+import type { Tool } from '../tools/index.js';
 
-import { LLMClientBase } from "./llm-client-base.js";
-import type { RetryConfig } from "../config.js";
-import { Logger, sdkLoggerAdapter } from "../util/logger.js";
+import { LLMClientBase } from './llm-client-base.js';
+import type { RetryConfig } from '../config.js';
+import { Logger, sdkLoggerAdapter } from '../util/logger.js';
 
 /**
  * LLM client using Anthropic's protocol.
@@ -45,43 +45,43 @@ export class AnthropicClient extends LLMClientBase {
     const apiMessages: Anthropic.MessageParam[] = [];
 
     for (const msg of messages) {
-      if (msg.role === "system") {
+      if (msg.role === 'system') {
         systemPrompt = msg.content;
         continue;
       }
 
-      if (msg.role === "user") {
+      if (msg.role === 'user') {
         // User messages can be string or content blocks
-        if (typeof msg.content === "string") {
+        if (typeof msg.content === 'string') {
           apiMessages.push({
-            role: "user",
+            role: 'user',
             content: msg.content,
           });
         } else {
           // Content blocks (e.g., for images)
           apiMessages.push({
-            role: "user",
+            role: 'user',
             content: msg.content as Anthropic.ContentBlockParam[],
           });
         }
-      } else if (msg.role === "assistant") {
+      } else if (msg.role === 'assistant') {
         // Build content blocks for assistant message
         const contentBlocks: Anthropic.ContentBlockParam[] = [];
 
         // Add thinking block if present
         if (msg.thinking) {
           contentBlocks.push({
-            type: "thinking",
+            type: 'thinking',
             thinking: msg.thinking,
             // Anthropic requires a signature field for thinking blocks
-            signature: "",
+            signature: '',
           } as Anthropic.ThinkingBlockParam);
         }
 
         // Add text content if present
         if (msg.content) {
           contentBlocks.push({
-            type: "text",
+            type: 'text',
             text: msg.content,
           });
         }
@@ -90,7 +90,7 @@ export class AnthropicClient extends LLMClientBase {
         if (msg.tool_calls && msg.tool_calls.length > 0) {
           for (const toolCall of msg.tool_calls) {
             contentBlocks.push({
-              type: "tool_use",
+              type: 'tool_use',
               id: toolCall.id,
               name: toolCall.function.name,
               input: toolCall.function.arguments || {},
@@ -101,14 +101,14 @@ export class AnthropicClient extends LLMClientBase {
         // Only add message if there's content (Anthropic doesn't like empty messages)
         if (contentBlocks.length > 0) {
           apiMessages.push({
-            role: "assistant",
+            role: 'assistant',
             content: contentBlocks,
           });
         }
-      } else if (msg.role === "tool") {
+      } else if (msg.role === 'tool') {
         // Anthropic requires tool results in a user message with tool_result blocks
         const toolResultBlock: Anthropic.ToolResultBlockParam = {
-          type: "tool_result",
+          type: 'tool_result',
           tool_use_id: msg.tool_call_id,
           content: msg.content,
         };
@@ -116,11 +116,15 @@ export class AnthropicClient extends LLMClientBase {
         // Check if the last message is a user message with content blocks
         // If so, merge the tool result into it (to avoid User->User sequence)
         const lastMsg = apiMessages[apiMessages.length - 1];
-        if (lastMsg && lastMsg.role === "user" && Array.isArray(lastMsg.content)) {
-          (lastMsg.content as Anthropic.ContentBlockParam[]).push(toolResultBlock);
+        if (
+          lastMsg &&
+          lastMsg.role === 'user' &&
+          Array.isArray(lastMsg.content)
+        ) {
+          lastMsg.content.push(toolResultBlock);
         } else {
           apiMessages.push({
-            role: "user",
+            role: 'user',
             content: [toolResultBlock],
           });
         }
@@ -190,7 +194,6 @@ export class AnthropicClient extends LLMClientBase {
     messages: Message[],
     tools?: Tool[] | null
   ): AsyncGenerator<LLMStreamChunk> {
-
     // ============================================================
     // STAGE 1: Package parameters and initiate API request
     // ============================================================
@@ -199,23 +202,23 @@ export class AnthropicClient extends LLMClientBase {
     const params: Anthropic.MessageCreateParams = {
       model: this.model,
       max_tokens: 16384,
-      messages: requestParams["messages"] as Anthropic.MessageParam[],
+      messages: requestParams['messages'] as Anthropic.MessageParam[],
     };
 
-    if (requestParams["system"]) {
-      params.system = requestParams["system"] as string;
+    if (requestParams['system']) {
+      params.system = requestParams['system'] as string;
     }
 
-    if (requestParams["tools"]) {
-      params.tools = requestParams["tools"] as Anthropic.Tool[];
+    if (requestParams['tools']) {
+      params.tools = requestParams['tools'] as Anthropic.Tool[];
     }
 
     Logger.logLLMRequest(params);
     const stream = this.client.messages.stream(params);
 
     // Track accumulated data for logging and final dispatch
-    let fullContent = "";
-    let fullThinking = "";
+    let fullContent = '';
+    let fullThinking = '';
     let chunkCount = 0;
     let finishReason: string | undefined;
     const accumulatedToolCalls: ToolCall[] = [];
@@ -228,23 +231,21 @@ export class AnthropicClient extends LLMClientBase {
     } | null = null;
 
     // ============================================================
-    // STAGE 2: Receive Streaming chunks and yield 
+    // STAGE 2: Receive Streaming chunks and yield
     // ============================================================
     for await (const event of stream) {
       chunkCount++;
 
       if (
-        event.type === "content_block_delta" &&
-        event.delta.type === "text_delta"
+        event.type === 'content_block_delta' &&
+        event.delta.type === 'text_delta'
       ) {
         const text = event.delta.text;
         fullContent += text;
         yield { content: text, done: false };
-      }
-
-      else if (
-        event.type === "content_block_delta" &&
-        (event.delta as any).type === "thinking_delta"
+      } else if (
+        event.type === 'content_block_delta' &&
+        (event.delta as any).type === 'thinking_delta'
       ) {
         const thinking = (event.delta as any).thinking;
         if (thinking) {
@@ -259,20 +260,20 @@ export class AnthropicClient extends LLMClientBase {
 
       // Detect a tool use block and initialize the buffer
       else if (
-        event.type === "content_block_start" &&
-        event.content_block.type === "tool_use"
+        event.type === 'content_block_start' &&
+        event.content_block.type === 'tool_use'
       ) {
         currentToolCall = {
           id: event.content_block.id,
           name: event.content_block.name,
-          inputJSON: "",
+          inputJSON: '',
         };
       }
 
       // Append JSON fragments as they arrive from the stream
       else if (
-        event.type === "content_block_delta" &&
-        event.delta.type === "input_json_delta"
+        event.type === 'content_block_delta' &&
+        event.delta.type === 'input_json_delta'
       ) {
         if (currentToolCall) {
           currentToolCall.inputJSON += event.delta.partial_json;
@@ -280,18 +281,22 @@ export class AnthropicClient extends LLMClientBase {
       }
 
       // Finalize instruction, parse JSON, and store in array
-      else if (event.type === "content_block_stop") {
+      else if (event.type === 'content_block_stop') {
         if (currentToolCall) {
           let parsedArgs: Record<string, unknown> = {};
           try {
-            parsedArgs = JSON.parse(currentToolCall.inputJSON || "{}");
+            parsedArgs = JSON.parse(currentToolCall.inputJSON || '{}');
           } catch {
-            Logger.log("LLM", "Failed to parse tool arguments JSON", currentToolCall.inputJSON);
+            Logger.log(
+              'LLM',
+              'Failed to parse tool arguments JSON',
+              currentToolCall.inputJSON
+            );
           }
 
           const toolCall: ToolCall = {
             id: currentToolCall.id,
-            type: "function",
+            type: 'function',
             function: {
               name: currentToolCall.name,
               arguments: parsedArgs,
@@ -303,20 +308,21 @@ export class AnthropicClient extends LLMClientBase {
       }
 
       // Capture metadata updates
-      else if (event.type === "message_delta") {
+      else if (event.type === 'message_delta') {
         if (event.delta.stop_reason) {
           finishReason = event.delta.stop_reason;
         }
       }
 
       // Dispatch all accumulated tool calls in the final chunk
-      else if (event.type === "message_stop") {
+      else if (event.type === 'message_stop') {
         yield {
           content: undefined,
           thinking: undefined,
-          tool_calls: accumulatedToolCalls.length > 0 ? accumulatedToolCalls : undefined,
+          tool_calls:
+            accumulatedToolCalls.length > 0 ? accumulatedToolCalls : undefined,
           done: true,
-          finish_reason: finishReason || "end_turn",
+          finish_reason: finishReason || 'end_turn',
         };
       }
     }

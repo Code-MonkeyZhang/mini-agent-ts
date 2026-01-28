@@ -2,11 +2,11 @@
  * Skill Loader - Load Claude Skills
  */
 
-import * as fs from "node:fs";
-import * as path from "node:path";
-import yaml from "yaml";
-import { SkillSchema } from "./types.js";
-import type { Skill } from "./types.js";
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import yaml from 'yaml';
+import { SkillSchema } from './types.js';
+import type { Skill } from './types.js';
 
 /**
  * Skill Loader
@@ -17,7 +17,7 @@ export class SkillLoader {
   private skillsDir: string;
   private loadedSkills: Map<string, Skill>;
 
-  constructor(skillsDir: string = "./skills") {
+  constructor(skillsDir: string = './skills') {
     this.skillsDir = skillsDir;
     this.loadedSkills = new Map();
   }
@@ -32,12 +32,12 @@ export class SkillLoader {
    * @throws None - Returns null on failure instead of throwing
    */
   private extractFrontmatter(
-    content: string,
+    content: string
   ): { frontmatterText: string; body: string } | null {
-    const firstDivider = content.indexOf("---\n");
+    const firstDivider = content.indexOf('---\n');
     if (firstDivider === -1) return null;
 
-    const secondDivider = content.indexOf("\n---\n", firstDivider + 4);
+    const secondDivider = content.indexOf('\n---\n', firstDivider + 4);
     if (secondDivider === -1) return null;
 
     return {
@@ -61,7 +61,7 @@ export class SkillLoader {
    */
   loadSkill(skillPath: string): Skill | null {
     try {
-      const content = fs.readFileSync(skillPath, "utf-8");
+      const content = fs.readFileSync(skillPath, 'utf-8');
 
       const extracted = this.extractFrontmatter(content);
       if (!extracted) {
@@ -136,7 +136,7 @@ export class SkillLoader {
           return `${prefix}\`${absPath}\` (use read_file to access)${suffix}`;
         }
         return match;
-      },
+      }
     );
 
     const patternMarkdown =
@@ -144,16 +144,16 @@ export class SkillLoader {
     content = content.replace(
       patternMarkdown,
       (match, prefix, linkText, filepath) => {
-        const cleanPath = filepath.startsWith("./")
+        const cleanPath = filepath.startsWith('./')
           ? filepath.slice(2)
           : filepath;
         const absPath = path.resolve(skillDir, cleanPath);
         if (fs.existsSync(absPath)) {
-          const effectivePrefix = prefix || "";
+          const effectivePrefix = prefix || '';
           return `${effectivePrefix}[${linkText}](\`${absPath}\`) (use read_file to access)`;
         }
         return match;
-      },
+      }
     );
 
     return content;
@@ -188,7 +188,7 @@ export class SkillLoader {
         const fullPath = path.join(dir, entry.name);
         if (entry.isDirectory()) {
           skillFiles.push(...findSkillFiles(fullPath));
-        } else if (entry.name === "SKILL.md") {
+        } else if (entry.name === 'SKILL.md') {
           skillFiles.push(fullPath);
         }
       }
@@ -205,7 +205,7 @@ export class SkillLoader {
         // Check duplicate skill
         if (this.loadedSkills.has(skill.name)) {
           console.warn(
-            `⚠️  Duplicate skill name detected: '${skill.name}'. Using first occurrence.`,
+            `⚠️  Duplicate skill name detected: '${skill.name}'. Using first occurrence.`
           );
           continue;
         }
@@ -247,22 +247,22 @@ export class SkillLoader {
    */
   getSkillsMetadataPrompt(): string {
     if (this.loadedSkills.size === 0) {
-      return "";
+      return '';
     }
 
     const promptParts: string[] = [];
-    promptParts.push("## Available Skills\n");
+    promptParts.push('## Available Skills\n');
     promptParts.push(
-      "You have access to specialized skills. Each skill provides expert guidance for specific tasks.\n",
+      'You have access to specialized skills. Each skill provides expert guidance for specific tasks.\n'
     );
     promptParts.push(
-      "Load a skill's full content using get_skill tool when needed.\n",
+      "Load a skill's full content using get_skill tool when needed.\n"
     );
 
     for (const skill of this.loadedSkills.values()) {
       promptParts.push(`- \`${skill.name}\`: ${skill.description}`);
     }
 
-    return promptParts.join("\n");
+    return promptParts.join('\n');
   }
 }

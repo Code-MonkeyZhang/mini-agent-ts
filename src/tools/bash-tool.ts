@@ -1,6 +1,6 @@
-import { exec, spawn } from "node:child_process";
-import type { ChildProcessWithoutNullStreams } from "node:child_process";
-import type { Tool, ToolResultWithMeta } from "./base.js";
+import { exec, spawn } from 'node:child_process';
+import type { ChildProcessWithoutNullStreams } from 'node:child_process';
+import type { Tool, ToolResultWithMeta } from './base.js';
 
 type BashInput = {
   command: string;
@@ -28,46 +28,46 @@ type BashOutputResult = ToolResultWithMeta<{
  * Format stdout/stderr/metadata into a single content string.
  */
 function formatBashContent(result: BashOutputResult): string {
-  let output = "";
+  let output = '';
   if (result.stdout) {
     output += result.stdout;
   }
   if (result.stderr) {
-    output += `${output ? "\n" : ""}[stderr]:\n${result.stderr}`;
+    output += `${output ? '\n' : ''}[stderr]:\n${result.stderr}`;
   }
   if (result.bash_id) {
-    output += `${output ? "\n" : ""}[bash_id]:\n${result.bash_id}`;
+    output += `${output ? '\n' : ''}[bash_id]:\n${result.bash_id}`;
   }
   if (result.exit_code) {
-    output += `${output ? "\n" : ""}[exit_code]:\n${result.exit_code}`;
+    output += `${output ? '\n' : ''}[exit_code]:\n${result.exit_code}`;
   }
-  return output || "(no output)";
+  return output || '(no output)';
 }
 
 /**
  * Pick OS-appropriate shell and args for the command.
  */
 function buildShellCommand(command: string): { shell: string; args: string[] } {
-  if (process.platform === "win32") {
+  if (process.platform === 'win32') {
     return {
-      shell: "powershell.exe",
-      args: ["-NoProfile", "-Command", command],
+      shell: 'powershell.exe',
+      args: ['-NoProfile', '-Command', command],
     };
   }
   return {
-    shell: "/bin/bash",
-    args: ["-lc", command],
+    shell: '/bin/bash',
+    args: ['-lc', command],
   };
 }
 
 class BackgroundShell {
   public outputLines: string[] = [];
   public lastReadIndex = 0;
-  public status: "running" | "completed" | "failed" | "terminated" | "error" =
-    "running";
+  public status: 'running' | 'completed' | 'failed' | 'terminated' | 'error' =
+    'running';
   public exitCode: number | null = null;
-  private stdoutBuffer = "";
-  private stderrBuffer = "";
+  private stdoutBuffer = '';
+  private stderrBuffer = '';
 
   constructor(
     public readonly bashId: string,
@@ -87,7 +87,7 @@ class BackgroundShell {
    * Split buffered output into complete lines.
    */
   flushBuffer(buffer: string): string[] {
-    const lines = buffer.split("\n");
+    const lines = buffer.split('\n');
     const completeLines = lines.slice(0, -1);
     return completeLines;
   }
@@ -96,17 +96,17 @@ class BackgroundShell {
    * Track stdout/stderr stream chunks and extract full lines.
    */
   handleStreamData(data: Buffer, isStdout: boolean): void {
-    const text = data.toString("utf8");
+    const text = data.toString('utf8');
     if (isStdout) {
       this.stdoutBuffer += text;
       const lines = this.flushBuffer(this.stdoutBuffer);
       lines.forEach((line) => this.addOutput(line));
-      this.stdoutBuffer = this.stdoutBuffer.split("\n").slice(-1)[0] ?? "";
+      this.stdoutBuffer = this.stdoutBuffer.split('\n').slice(-1)[0] ?? '';
     } else {
       this.stderrBuffer += text;
       const lines = this.flushBuffer(this.stderrBuffer);
       lines.forEach((line) => this.addOutput(line));
-      this.stderrBuffer = this.stderrBuffer.split("\n").slice(-1)[0] ?? "";
+      this.stderrBuffer = this.stderrBuffer.split('\n').slice(-1)[0] ?? '';
     }
   }
 
@@ -116,11 +116,11 @@ class BackgroundShell {
   finalizeBuffers(): void {
     if (this.stdoutBuffer) {
       this.addOutput(this.stdoutBuffer);
-      this.stdoutBuffer = "";
+      this.stdoutBuffer = '';
     }
     if (this.stderrBuffer) {
       this.addOutput(this.stderrBuffer);
-      this.stderrBuffer = "";
+      this.stderrBuffer = '';
     }
   }
 
@@ -148,14 +148,14 @@ class BackgroundShell {
    */
   updateStatus(exitCode: number | null): void {
     if (exitCode === null) {
-      this.status = "running";
+      this.status = 'running';
       return;
     }
     this.exitCode = exitCode;
-    if (this.status === "terminated") {
+    if (this.status === 'terminated') {
       return;
     }
-    this.status = exitCode === 0 ? "completed" : "failed";
+    this.status = exitCode === 0 ? 'completed' : 'failed';
   }
 
   /**
@@ -163,21 +163,21 @@ class BackgroundShell {
    */
   async terminate(): Promise<void> {
     if (!this.process.killed) {
-      this.process.kill("SIGTERM");
+      this.process.kill('SIGTERM');
     }
     await new Promise<void>((resolve) => {
       const timeout = setTimeout(() => {
         if (!this.process.killed) {
-          this.process.kill("SIGKILL");
+          this.process.kill('SIGKILL');
         }
         resolve();
       }, 5000);
-      this.process.once("exit", () => {
+      this.process.once('exit', () => {
         clearTimeout(timeout);
         resolve();
       });
     });
-    this.status = "terminated";
+    this.status = 'terminated';
   }
 }
 
@@ -230,11 +230,11 @@ class BackgroundShellManager {
  * Normalize BashOutputResult and auto-generate content.
  */
 function buildResult(
-  base: Omit<BashOutputResult, "content"> & { content?: string }
+  base: Omit<BashOutputResult, 'content'> & { content?: string }
 ): BashOutputResult {
   const result: BashOutputResult = {
     success: base.success,
-    content: base.content ?? "",
+    content: base.content ?? '',
     error: base.error ?? null,
     stdout: base.stdout,
     stderr: base.stderr,
@@ -246,46 +246,46 @@ function buildResult(
 }
 
 export class BashTool implements Tool<BashInput, BashOutputResult> {
-  public name = "bash";
+  public name = 'bash';
   public description =
-    "Execute bash commands in foreground or background.\n\n" +
-    "For terminal operations like git, npm, docker, etc. DO NOT use for file operations - use specialized tools.\n\n" +
-    "Parameters:\n" +
-    "  - command (required): Bash command to execute\n" +
-    "  - timeout (optional): Timeout in seconds (default: 120, max: 600) for foreground commands\n" +
-    "  - run_in_background (optional): Set true for long-running commands (servers, etc.)\n\n" +
-    "Tips:\n" +
-    "  - Quote file paths with spaces: cd \"My Documents\"\n" +
-    "  - Chain dependent commands with &&: git add . && git commit -m \"msg\"\n" +
-    "  - Use absolute paths instead of cd when possible\n" +
-    "  - For background commands, monitor with bash_output and terminate with bash_kill\n\n" +
-    "Examples:\n" +
-    "  - git status\n" +
-    "  - npm test\n" +
-    "  - python3 -m http.server 8080 (with run_in_background=true)";
+    'Execute bash commands in foreground or background.\n\n' +
+    'For terminal operations like git, npm, docker, etc. DO NOT use for file operations - use specialized tools.\n\n' +
+    'Parameters:\n' +
+    '  - command (required): Bash command to execute\n' +
+    '  - timeout (optional): Timeout in seconds (default: 120, max: 600) for foreground commands\n' +
+    '  - run_in_background (optional): Set true for long-running commands (servers, etc.)\n\n' +
+    'Tips:\n' +
+    '  - Quote file paths with spaces: cd "My Documents"\n' +
+    '  - Chain dependent commands with &&: git add . && git commit -m "msg"\n' +
+    '  - Use absolute paths instead of cd when possible\n' +
+    '  - For background commands, monitor with bash_output and terminate with bash_kill\n\n' +
+    'Examples:\n' +
+    '  - git status\n' +
+    '  - npm test\n' +
+    '  - python3 -m http.server 8080 (with run_in_background=true)';
 
   public parameters = {
-    type: "object",
+    type: 'object',
     properties: {
       command: {
-        type: "string",
+        type: 'string',
         description:
-          "The shell command to execute. Quote file paths with spaces using double quotes.",
+          'The shell command to execute. Quote file paths with spaces using double quotes.',
       },
       timeout: {
-        type: "integer",
+        type: 'integer',
         description:
-          "Optional: Timeout in seconds (default: 120, max: 600). Only applies to foreground commands.",
+          'Optional: Timeout in seconds (default: 120, max: 600). Only applies to foreground commands.',
         default: 120,
       },
       run_in_background: {
-        type: "boolean",
+        type: 'boolean',
         description:
-          "Optional: Set to true to run the command in the background. Use this for long-running commands like servers. You can monitor output using bash_output tool.",
+          'Optional: Set to true to run the command in the background. Use this for long-running commands like servers. You can monitor output using bash_output tool.',
         default: false,
       },
     },
-    required: ["command"],
+    required: ['command'],
   };
 
   /**
@@ -298,7 +298,7 @@ export class BashTool implements Tool<BashInput, BashOutputResult> {
 
     if (runInBackground) {
       const bashId = Math.random().toString(16).slice(2, 10);
-      const process = spawn(shell, args, { stdio: "pipe" });
+      const process = spawn(shell, args, { stdio: 'pipe' });
       const bgShell = new BackgroundShell(
         bashId,
         params.command,
@@ -307,24 +307,24 @@ export class BashTool implements Tool<BashInput, BashOutputResult> {
       );
       BackgroundShellManager.add(bgShell);
 
-      process.stdout.on("data", (data: Buffer) =>
+      process.stdout.on('data', (data: Buffer) =>
         bgShell.handleStreamData(data, true)
       );
-      process.stderr.on("data", (data: Buffer) =>
+      process.stderr.on('data', (data: Buffer) =>
         bgShell.handleStreamData(data, false)
       );
-      process.on("close", (code) => {
+      process.on('close', (code) => {
         bgShell.finalizeBuffers();
         bgShell.updateStatus(code);
       });
-      process.on("error", () => {
-        bgShell.status = "error";
+      process.on('error', () => {
+        bgShell.status = 'error';
       });
 
       return buildResult({
         success: true,
         stdout: `Background command started with ID: ${bashId}`,
-        stderr: "",
+        stderr: '',
         exit_code: 0,
         bash_id: bashId,
         content:
@@ -344,18 +344,18 @@ export class BashTool implements Tool<BashInput, BashOutputResult> {
         (error, stdout, stderr) => {
           if (error) {
             const exitCode =
-              typeof (error as { code?: number }).code === "number"
-                ? (error as { code?: number }).code ?? -1
+              typeof (error as { code?: number }).code === 'number'
+                ? ((error as { code?: number }).code ?? -1)
                 : -1;
             const errorMsg =
-              error.killed && error.signal === "SIGTERM"
+              error.killed && error.signal === 'SIGTERM'
                 ? `Command timed out after ${timeout} seconds`
                 : `Command failed with exit code ${exitCode}`;
             resolve(
               buildResult({
                 success: false,
                 error: stderr ? `${errorMsg}\n${stderr.trim()}` : errorMsg,
-                stdout: stdout ?? "",
+                stdout: stdout ?? '',
                 stderr: stderr ?? errorMsg,
                 exit_code: exitCode,
                 bash_id: null,
@@ -366,8 +366,8 @@ export class BashTool implements Tool<BashInput, BashOutputResult> {
           resolve(
             buildResult({
               success: true,
-              stdout: stdout ?? "",
-              stderr: stderr ?? "",
+              stdout: stdout ?? '',
+              stderr: stderr ?? '',
               exit_code: 0,
               bash_id: null,
             })
@@ -379,32 +379,32 @@ export class BashTool implements Tool<BashInput, BashOutputResult> {
 }
 
 export class BashOutputTool implements Tool<BashOutputInput, BashOutputResult> {
-  public name = "bash_output";
+  public name = 'bash_output';
   public description =
-    "Retrieves output from a running or completed background bash shell.\n\n" +
-    "- Takes a bash_id parameter identifying the shell\n" +
-    "- Always returns only new output since the last check\n" +
-    "- Returns stdout and stderr output along with shell status\n" +
-    "- Supports optional regex filtering to show only lines matching a pattern\n" +
-    "- Use this tool when you need to monitor or check the output of a long-running shell\n" +
-    "- Shell IDs can be found using the bash tool with run_in_background=true\n\n" +
-    "Example: bash_output(bash_id=\"abc12345\")";
+    'Retrieves output from a running or completed background bash shell.\n\n' +
+    '- Takes a bash_id parameter identifying the shell\n' +
+    '- Always returns only new output since the last check\n' +
+    '- Returns stdout and stderr output along with shell status\n' +
+    '- Supports optional regex filtering to show only lines matching a pattern\n' +
+    '- Use this tool when you need to monitor or check the output of a long-running shell\n' +
+    '- Shell IDs can be found using the bash tool with run_in_background=true\n\n' +
+    'Example: bash_output(bash_id="abc12345")';
 
   public parameters = {
-    type: "object",
+    type: 'object',
     properties: {
       bash_id: {
-        type: "string",
+        type: 'string',
         description:
-          "The ID of the background shell to retrieve output from. Shell IDs are returned when starting a command with run_in_background=true.",
+          'The ID of the background shell to retrieve output from. Shell IDs are returned when starting a command with run_in_background=true.',
       },
       filter_str: {
-        type: "string",
+        type: 'string',
         description:
-          "Optional regular expression to filter the output lines. Only lines matching this regex will be included in the result. Any lines that do not match will no longer be available to read.",
+          'Optional regular expression to filter the output lines. Only lines matching this regex will be included in the result. Any lines that do not match will no longer be available to read.',
       },
     },
-    required: ["bash_id"],
+    required: ['bash_id'],
   };
 
   /**
@@ -417,10 +417,10 @@ export class BashOutputTool implements Tool<BashOutputInput, BashOutputResult> {
       return buildResult({
         success: false,
         error: `Shell not found: ${params.bash_id}. Available: ${
-          available.length ? available.join(", ") : "none"
+          available.length ? available.join(', ') : 'none'
         }`,
-        stdout: "",
-        stderr: "",
+        stdout: '',
+        stderr: '',
         exit_code: -1,
         bash_id: params.bash_id,
       });
@@ -429,8 +429,8 @@ export class BashOutputTool implements Tool<BashOutputInput, BashOutputResult> {
     const newLines = shell.getNewOutput(params.filter_str);
     return buildResult({
       success: true,
-      stdout: newLines.length ? newLines.join("\n") : "",
-      stderr: "",
+      stdout: newLines.length ? newLines.join('\n') : '',
+      stderr: '',
       exit_code: shell.exitCode ?? 0,
       bash_id: params.bash_id,
     });
@@ -438,27 +438,27 @@ export class BashOutputTool implements Tool<BashOutputInput, BashOutputResult> {
 }
 
 export class BashKillTool implements Tool<BashKillInput, BashOutputResult> {
-  public name = "bash_kill";
+  public name = 'bash_kill';
   public description =
-    "Kills a running background bash shell by its ID.\n\n" +
-    "- Takes a bash_id parameter identifying the shell to kill\n" +
-    "- Attempts graceful termination (SIGTERM) first, then forces (SIGKILL) if needed\n" +
-    "- Returns the final status and any remaining output before termination\n" +
-    "- Cleans up all resources associated with the shell\n" +
-    "- Use this tool when you need to terminate a long-running shell\n" +
-    "- Shell IDs can be found using the bash tool with run_in_background=true\n\n" +
-    "Example: bash_kill(bash_id=\"abc12345\")";
+    'Kills a running background bash shell by its ID.\n\n' +
+    '- Takes a bash_id parameter identifying the shell to kill\n' +
+    '- Attempts graceful termination (SIGTERM) first, then forces (SIGKILL) if needed\n' +
+    '- Returns the final status and any remaining output before termination\n' +
+    '- Cleans up all resources associated with the shell\n' +
+    '- Use this tool when you need to terminate a long-running shell\n' +
+    '- Shell IDs can be found using the bash tool with run_in_background=true\n\n' +
+    'Example: bash_kill(bash_id="abc12345")';
 
   public parameters = {
-    type: "object",
+    type: 'object',
     properties: {
       bash_id: {
-        type: "string",
+        type: 'string',
         description:
-          "The ID of the background shell to terminate. Shell IDs are returned when starting a command with run_in_background=true.",
+          'The ID of the background shell to terminate. Shell IDs are returned when starting a command with run_in_background=true.',
       },
     },
-    required: ["bash_id"],
+    required: ['bash_id'],
   };
 
   /**
@@ -471,8 +471,8 @@ export class BashKillTool implements Tool<BashKillInput, BashOutputResult> {
       const terminated = await BackgroundShellManager.terminate(params.bash_id);
       return buildResult({
         success: true,
-        stdout: remainingLines.join("\n"),
-        stderr: "",
+        stdout: remainingLines.join('\n'),
+        stderr: '',
         exit_code: terminated.exitCode ?? 0,
         bash_id: params.bash_id,
       });
@@ -481,9 +481,9 @@ export class BashKillTool implements Tool<BashKillInput, BashOutputResult> {
       return buildResult({
         success: false,
         error: `${(error as Error).message}. Available: ${
-          available.length ? available.join(", ") : "none"
+          available.length ? available.join(', ') : 'none'
         }`,
-        stdout: "",
+        stdout: '',
         stderr: (error as Error).message || String(error),
         exit_code: -1,
         bash_id: params.bash_id,

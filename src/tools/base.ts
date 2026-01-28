@@ -11,7 +11,6 @@ export type JsonSchema = Record<string, unknown>;
  */
 export type ToolInput = Record<string, unknown>;
 
-
 /**
  * Unified structure for Tool execution results.
  * All Tool `execute()` methods must return an object that matches this shape.
@@ -42,9 +41,8 @@ export interface ToolResult {
  * }>;
  */
 export type ToolResultWithMeta<
-  TMeta extends Record<string, unknown> = Record<string, never>
+  TMeta extends Record<string, unknown> = Record<string, never>,
 > = ToolResult & TMeta;
-
 
 /**
  * Tool interface - the core interface all tools must implement.
@@ -60,11 +58,10 @@ export type ToolResultWithMeta<
  */
 export interface Tool<
   Input extends ToolInput = ToolInput,
-  Output extends ToolResult = ToolResult
+  Output extends ToolResult = ToolResult,
 > {
   name: string;
   description: string;
   parameters: JsonSchema;
   execute(params: Input): Promise<Output>;
 }
-

@@ -4,11 +4,11 @@
  * Provides unified configuration loading and management functionality using Zod for validation and type safety.
  */
 
-import * as fs from "node:fs";
-import * as path from "node:path";
-import * as yaml from "yaml";
-import { fileURLToPath } from "node:url";
-import { z } from "zod";
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import * as yaml from 'yaml';
+import { fileURLToPath } from 'node:url';
+import { z } from 'zod';
 
 // ============ Defaults ============
 
@@ -18,13 +18,13 @@ const DEFAULTS = {
     maxRetries: 3,
   },
   LLM: {
-    apiBase: "https://api.minimax.io",
-    model: "MiniMax-M2",
-    provider: "anthropic" as const,
+    apiBase: 'https://api.minimax.io',
+    model: 'MiniMax-M2',
+    provider: 'anthropic' as const,
   },
   AGENT: {
     maxSteps: 50,
-    systemPromptPath: "system_prompt.md",
+    systemPromptPath: 'system_prompt.md',
   },
   LOGGING: {
     enableLogging: false,
@@ -35,8 +35,8 @@ const DEFAULTS = {
     sseReadTimeout: 120.0,
   },
   TOOLS: {
-    skillsDir: "./skills",
-    mcpConfigPath: "mcp.json",
+    skillsDir: './skills',
+    mcpConfigPath: 'mcp.json',
   },
 };
 
@@ -61,10 +61,10 @@ const ToolsSchema = z.object({
 
 const ConfigSchema = z
   .object({
-    apiKey: z.string().min(1, "Please configure a valid API Key"),
+    apiKey: z.string().min(1, 'Please configure a valid API Key'),
     apiBase: z.string().default(DEFAULTS.LLM.apiBase),
     model: z.string().default(DEFAULTS.LLM.model),
-    provider: z.enum(["anthropic", "openai"]).default(DEFAULTS.LLM.provider),
+    provider: z.enum(['anthropic', 'openai']).default(DEFAULTS.LLM.provider),
 
     enableLogging: z.boolean().default(DEFAULTS.LOGGING.enableLogging),
 
@@ -96,10 +96,10 @@ const ConfigSchema = z
 // ============ Types ============
 
 export type RetryConfig = z.infer<typeof RetrySchema>; // 创建一个名为 RetryConfig 的类型，它包含了 RetrySchema 中定义的所有字段
-export type LoggingConfig = z.infer<typeof ConfigSchema>["logging"];
+export type LoggingConfig = z.infer<typeof ConfigSchema>['logging'];
 export type ToolsConfig = z.infer<typeof ToolsSchema>;
-export type LLMConfig = z.infer<typeof ConfigSchema>["llm"];
-export type AgentConfig = z.infer<typeof ConfigSchema>["agent"];
+export type LLMConfig = z.infer<typeof ConfigSchema>['llm'];
+export type AgentConfig = z.infer<typeof ConfigSchema>['agent'];
 
 // ============ Config Class ============
 
@@ -132,9 +132,9 @@ export class Config {
       throw new Error(`Configuration file does not exist: ${configPath}`);
     }
 
-    const content = fs.readFileSync(configPath, "utf8");
+    const content = fs.readFileSync(configPath, 'utf8');
     if (!content || !content.trim()) {
-      throw new Error("Configuration file is empty");
+      throw new Error('Configuration file is empty');
     }
 
     const rawData = yaml.parse(content);
@@ -155,22 +155,22 @@ export class Config {
    * @returns The absolute path to the file if found, otherwise null
    */
   static findConfigFile(filename: string): string | null {
-    const devConfig = path.join(process.cwd(), "config", filename);
+    const devConfig = path.join(process.cwd(), 'config', filename);
     if (fs.existsSync(devConfig)) {
       return devConfig;
     }
 
-    const homeDir = process.env["HOME"] || process.env["USERPROFILE"] || "";
-    const userConfig = path.join(homeDir, ".mini-agent-ts", "config", filename);
+    const homeDir = process.env['HOME'] || process.env['USERPROFILE'] || '';
+    const userConfig = path.join(homeDir, '.mini-agent-ts', 'config', filename);
     if (fs.existsSync(userConfig)) {
       return userConfig;
     }
 
     const packageRoot = path.resolve(
       path.dirname(fileURLToPath(import.meta.url)),
-      "..",
+      '..'
     );
-    const packageConfig = path.join(packageRoot, "config", filename);
+    const packageConfig = path.join(packageRoot, 'config', filename);
     if (fs.existsSync(packageConfig)) {
       return packageConfig;
     }

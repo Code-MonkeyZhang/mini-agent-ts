@@ -1,11 +1,11 @@
-import { Logger } from "../../util/logger.js";
+import { Logger } from '../../util/logger.js';
 import {
   type Tool,
   type ToolInput,
   type ToolResult,
   type JsonSchema,
-} from "../base.js";
-import { type Closable, type ConnectionType, type McpClient } from "./types.js";
+} from '../base.js';
+import { type Closable, type ConnectionType, type McpClient } from './types.js';
 import {
   getMcpTimeoutConfig,
   loadClientConstructor,
@@ -17,7 +17,7 @@ import {
   normalizeToolSchema,
   toSecondsLabel,
   withTimeout,
-} from "./utils.js";
+} from './utils.js';
 
 export class MCPTool implements Tool {
   public name: string;
@@ -45,7 +45,7 @@ export class MCPTool implements Tool {
     const timeoutMs = this.executeTimeoutSec * 1000;
 
     // [Debug] Log Request
-    Logger.debug("MCP DEBUG", `Calling '${this.name}' with args:`, params);
+    Logger.debug('MCP DEBUG', `Calling '${this.name}' with args:`, params);
 
     try {
       const result = await withTimeout(
@@ -60,7 +60,7 @@ export class MCPTool implements Tool {
       );
 
       // [Debug] Log Response
-      Logger.debug("MCP DEBUG", `Result from '${this.name}':`, result);
+      Logger.debug('MCP DEBUG', `Result from '${this.name}':`, result);
 
       const content = normalizeContent(result.content);
       const isError = Boolean(result.isError ?? result.is_error ?? false);
@@ -68,14 +68,14 @@ export class MCPTool implements Tool {
       return {
         success: !isError,
         content,
-        error: isError ? "Tool returned error" : null,
+        error: isError ? 'Tool returned error' : null,
       };
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      const timedOut = message.includes("timed out");
+      const timedOut = message.includes('timed out');
       return {
         success: false,
-        content: "",
+        content: '',
         error: timedOut ? message : `MCP tool execution failed: ${message}`,
       };
     }
@@ -139,9 +139,9 @@ export class MCPServerConnection {
   }
 
   private async createTransport(): Promise<Closable> {
-    if (this.connectionType === "stdio") {
+    if (this.connectionType === 'stdio') {
       if (!this.command) {
-        throw new Error("Missing command for stdio transport");
+        throw new Error('Missing command for stdio transport');
       }
       const transportCtor = await loadStdioTransportConstructor();
       return new transportCtor({
@@ -153,10 +153,10 @@ export class MCPServerConnection {
     }
 
     if (!this.url) {
-      throw new Error("Missing url for remote transport");
+      throw new Error('Missing url for remote transport');
     }
 
-    if (this.connectionType === "sse") {
+    if (this.connectionType === 'sse') {
       const sseCtor = await loadSseTransportConstructor();
       return new sseCtor({
         url: this.url,
@@ -173,63 +173,63 @@ export class MCPServerConnection {
     });
   }
 
-   async connect(): Promise<boolean> {
-     const connectTimeoutMs = this.getConnectTimeoutSec() * 1000;
-     try {
-       const transport = await this.createTransport();
-       const ClientCtor = await loadClientConstructor();
-       const client = new ClientCtor({
-         name: "mini-agent-ts",
-         version: "0.0.1",
-       }) as unknown as McpClient;
+  async connect(): Promise<boolean> {
+    const connectTimeoutMs = this.getConnectTimeoutSec() * 1000;
+    try {
+      const transport = await this.createTransport();
+      const ClientCtor = await loadClientConstructor();
+      const client = new ClientCtor({
+        name: 'mini-agent-ts',
+        version: '0.0.1',
+      }) as unknown as McpClient;
 
-       const toolsList = await withTimeout(
-         (async () => {
-           await client.connect(transport);
-           return await client.listTools();
-         })(),
-         connectTimeoutMs,
-         `Connection to MCP server '${
-           this.name
-         }' timed out after ${toSecondsLabel(this.getConnectTimeoutSec())}.`
-       );
+      const toolsList = await withTimeout(
+        (async () => {
+          await client.connect(transport);
+          return await client.listTools();
+        })(),
+        connectTimeoutMs,
+        `Connection to MCP server '${
+          this.name
+        }' timed out after ${toSecondsLabel(this.getConnectTimeoutSec())}.`
+      );
 
-       this.session = client;
-       this.transport = transport;
+      this.session = client;
+      this.transport = transport;
 
-       const executeTimeout = this.getExecuteTimeoutSec();
-       for (const tool of toolsList.tools ?? []) {
-         const rawParameters = tool.inputSchema ?? tool.input_schema ?? {};
-         const normalizedParameters = normalizeToolSchema(rawParameters);
-         const normalizedDescription = normalizeToolDescription(
-           tool.description ?? ""
-         );
+      const executeTimeout = this.getExecuteTimeoutSec();
+      for (const tool of toolsList.tools ?? []) {
+        const rawParameters = tool.inputSchema ?? tool.input_schema ?? {};
+        const normalizedParameters = normalizeToolSchema(rawParameters);
+        const normalizedDescription = normalizeToolDescription(
+          tool.description ?? ''
+        );
 
-         this.tools.push(
-           new MCPTool({
-             name: tool.name,
-             description: normalizedDescription,
-             parameters: normalizedParameters,
-             session: client,
-             executeTimeoutSec: executeTimeout,
-           })
-         );
-       }
+        this.tools.push(
+          new MCPTool({
+            name: tool.name,
+            description: normalizedDescription,
+            parameters: normalizedParameters,
+            session: client,
+            executeTimeoutSec: executeTimeout,
+          })
+        );
+      }
 
-       const connectedMsg = `✅ Connected to MCP server '${this.name}' (${this.connectionType}) - loaded ${this.tools.length} tools`;
-       console.log(connectedMsg);
-       Logger.log("startup", connectedMsg);
+      const connectedMsg = `✅ Connected to MCP server '${this.name}' (${this.connectionType}) - loaded ${this.tools.length} tools`;
+      console.log(connectedMsg);
+      Logger.log('startup', connectedMsg);
 
-       return true;
-     } catch (error: unknown) {
-       const message = error instanceof Error ? error.message : String(error);
-       const msg = `✗ Failed to connect to MCP server '${this.name}': ${message}`;
-       console.log(msg);
-       Logger.log("startup", msg);
-       await this.disconnect();
-       return false;
-     }
-   }
+      return true;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      const msg = `✗ Failed to connect to MCP server '${this.name}': ${message}`;
+      console.log(msg);
+      Logger.log('startup', msg);
+      await this.disconnect();
+      return false;
+    }
+  }
 
   async disconnect(): Promise<void> {
     const session = this.session;

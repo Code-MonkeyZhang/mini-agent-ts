@@ -1,9 +1,9 @@
-import { type JsonSchema } from "../base.js";
+import { type JsonSchema } from '../base.js';
 import {
   type ClientConstructor,
   type TransportConstructor,
   type MCPTimeoutConfig,
-} from "./types.js";
+} from './types.js';
 
 const DEFAULT_TIMEOUTS: MCPTimeoutConfig = {
   connectTimeout: 10.0,
@@ -31,11 +31,13 @@ export function getMcpTimeoutConfig(): MCPTimeoutConfig {
 }
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-export function isFunction(value: unknown): value is (...args: never[]) => unknown {
-  return typeof value === "function";
+export function isFunction(
+  value: unknown
+): value is (...args: never[]) => unknown {
+  return typeof value === 'function';
 }
 
 export async function loadNamedExport(
@@ -58,18 +60,18 @@ export async function loadNamedExport(
   const message =
     lastError instanceof Error ? lastError.message : String(lastError);
   throw new Error(
-    `Failed to load MCP SDK export (${exportNames.join(", ")}): ${message}`
+    `Failed to load MCP SDK export (${exportNames.join(', ')}): ${message}`
   );
 }
 
 export async function loadClientConstructor(): Promise<ClientConstructor> {
   const ctor = await loadNamedExport(
     [
-      "@modelcontextprotocol/sdk/client/index.js",
-      "@modelcontextprotocol/sdk/client/index.mjs",
-      "@modelcontextprotocol/sdk/client",
+      '@modelcontextprotocol/sdk/client/index.js',
+      '@modelcontextprotocol/sdk/client/index.mjs',
+      '@modelcontextprotocol/sdk/client',
     ],
-    ["Client"]
+    ['Client']
   );
   return ctor as ClientConstructor;
 }
@@ -77,11 +79,11 @@ export async function loadClientConstructor(): Promise<ClientConstructor> {
 export async function loadStdioTransportConstructor(): Promise<TransportConstructor> {
   const ctor = await loadNamedExport(
     [
-      "@modelcontextprotocol/sdk/client/stdio.js",
-      "@modelcontextprotocol/sdk/client/stdio.mjs",
-      "@modelcontextprotocol/sdk/client/stdio",
+      '@modelcontextprotocol/sdk/client/stdio.js',
+      '@modelcontextprotocol/sdk/client/stdio.mjs',
+      '@modelcontextprotocol/sdk/client/stdio',
     ],
-    ["StdioClientTransport"]
+    ['StdioClientTransport']
   );
   return ctor as TransportConstructor;
 }
@@ -89,11 +91,11 @@ export async function loadStdioTransportConstructor(): Promise<TransportConstruc
 export async function loadSseTransportConstructor(): Promise<TransportConstructor> {
   const ctor = await loadNamedExport(
     [
-      "@modelcontextprotocol/sdk/client/sse.js",
-      "@modelcontextprotocol/sdk/client/sse.mjs",
-      "@modelcontextprotocol/sdk/client/sse",
+      '@modelcontextprotocol/sdk/client/sse.js',
+      '@modelcontextprotocol/sdk/client/sse.mjs',
+      '@modelcontextprotocol/sdk/client/sse',
     ],
-    ["SSEClientTransport"]
+    ['SSEClientTransport']
   );
   return ctor as TransportConstructor;
 }
@@ -101,20 +103,20 @@ export async function loadSseTransportConstructor(): Promise<TransportConstructo
 export async function loadStreamableHttpTransportConstructor(): Promise<TransportConstructor> {
   const ctor = await loadNamedExport(
     [
-      "@modelcontextprotocol/sdk/client/streamableHttp.js",
-      "@modelcontextprotocol/sdk/client/streamable_http.js",
-      "@modelcontextprotocol/sdk/client/streamableHttp.mjs",
-      "@modelcontextprotocol/sdk/client/streamable_http.mjs",
-      "@modelcontextprotocol/sdk/client/streamableHttp",
-      "@modelcontextprotocol/sdk/client/streamable_http",
+      '@modelcontextprotocol/sdk/client/streamableHttp.js',
+      '@modelcontextprotocol/sdk/client/streamable_http.js',
+      '@modelcontextprotocol/sdk/client/streamableHttp.mjs',
+      '@modelcontextprotocol/sdk/client/streamable_http.mjs',
+      '@modelcontextprotocol/sdk/client/streamableHttp',
+      '@modelcontextprotocol/sdk/client/streamable_http',
     ],
-    ["StreamableHTTPClientTransport", "StreamableHttpClientTransport"]
+    ['StreamableHTTPClientTransport', 'StreamableHttpClientTransport']
   );
   return ctor as TransportConstructor;
 }
 
 export function toSecondsLabel(seconds: number): string {
-  return Number.isFinite(seconds) ? `${seconds}s` : "unknown";
+  return Number.isFinite(seconds) ? `${seconds}s` : 'unknown';
 }
 
 export async function withTimeout<T>(
@@ -143,17 +145,17 @@ export async function withTimeout<T>(
 
 export function normalizeContent(content: unknown): string {
   if (content === undefined || content === null) {
-    return "";
+    return '';
   }
   const items = Array.isArray(content) ? content : [content];
   const parts: string[] = [];
   for (const item of items) {
-    if (typeof item === "string") {
+    if (typeof item === 'string') {
       parts.push(item);
       continue;
     }
-    if (isRecord(item) && typeof item["text"] === "string") {
-      parts.push(item["text"] as string);
+    if (isRecord(item) && typeof item['text'] === 'string') {
+      parts.push(item['text']);
       continue;
     }
     try {
@@ -162,89 +164,88 @@ export function normalizeContent(content: unknown): string {
       parts.push(String(item));
     }
   }
-  return parts.join("\n");
+  return parts.join('\n');
 }
 
 export function normalizeToolSchema(schema: JsonSchema): JsonSchema {
-  if (!schema || typeof schema !== "object") {
-    return { type: "object", properties: {} };
+  if (!schema || typeof schema !== 'object') {
+    return { type: 'object', properties: {} };
   }
 
   const normalized: JsonSchema = {
-    type: (schema["type"] as string) || "object",
+    type: (schema['type'] as string) || 'object',
   };
 
   // Process properties
-  if (schema["properties"] && isRecord(schema["properties"])) {
+  if (schema['properties'] && isRecord(schema['properties'])) {
     const normalizedProps: Record<string, unknown> = {};
 
-    for (const [key, value] of Object.entries(schema["properties"])) {
+    for (const [key, value] of Object.entries(schema['properties'])) {
       if (!isRecord(value)) continue;
 
       const prop = value;
       const normalizedProp: Record<string, unknown> = {};
 
       // Handle anyOf - extract the first non-null type
-      if (prop["anyOf"] && Array.isArray(prop["anyOf"])) {
-        const nonNullType = prop["anyOf"].find(
-          (t: unknown) =>
-            isRecord(t) && (t as Record<string, unknown>)["type"] !== "null"
+      if (prop['anyOf'] && Array.isArray(prop['anyOf'])) {
+        const nonNullType = prop['anyOf'].find(
+          (t: unknown) => isRecord(t) && t['type'] !== 'null'
         );
         if (nonNullType && isRecord(nonNullType)) {
-          const typeObj = nonNullType as Record<string, unknown>;
-          normalizedProp["type"] = typeObj["type"];
+          const typeObj = nonNullType;
+          normalizedProp['type'] = typeObj['type'];
           // Copy items for array types
-          if (typeObj["items"]) {
-            normalizedProp["items"] = typeObj["items"];
+          if (typeObj['items']) {
+            normalizedProp['items'] = typeObj['items'];
           }
         }
-      } else if (prop["type"]) {
-        normalizedProp["type"] = prop["type"];
-        if (prop["items"]) {
-          normalizedProp["items"] = prop["items"];
+      } else if (prop['type']) {
+        normalizedProp['type'] = prop['type'];
+        if (prop['items']) {
+          normalizedProp['items'] = prop['items'];
         }
       }
 
       // Use description if available, otherwise convert title to description
-      if (prop["description"]) {
-        normalizedProp["description"] = prop["description"];
-      } else if (prop["title"] && typeof prop["title"] === "string") {
+      if (prop['description']) {
+        normalizedProp['description'] = prop['description'];
+      } else if (prop['title'] && typeof prop['title'] === 'string') {
         // Convert snake_case/camelCase title to readable description
-        normalizedProp["description"] = (prop["title"] as string)
-          .replace(/_/g, " ")
-          .replace(/([a-z])([A-Z])/g, "$1 $2")
+        normalizedProp['description'] = prop['title']
+          .replace(/_/g, ' ')
+          .replace(/([a-z])([A-Z])/g, '$1 $2')
           .toLowerCase();
       }
 
       // Copy default value if present
-      if (prop["default"] !== undefined) {
-        normalizedProp["default"] = prop["default"];
+      if (prop['default'] !== undefined) {
+        normalizedProp['default'] = prop['default'];
       }
 
       // Copy enum if present
-      if (prop["enum"]) {
-        normalizedProp["enum"] = prop["enum"];
+      if (prop['enum']) {
+        normalizedProp['enum'] = prop['enum'];
       }
 
       normalizedProps[key] = normalizedProp;
     }
 
-    normalized["properties"] = normalizedProps;
+    normalized['properties'] = normalizedProps;
   }
 
   // Copy required array
-  if (schema["required"] && Array.isArray(schema["required"])) {
-    normalized["required"] = schema["required"];
+  if (schema['required'] && Array.isArray(schema['required'])) {
+    normalized['required'] = schema['required'];
   }
 
   return normalized;
 }
 
 export function normalizeToolDescription(description: string): string {
-  if (!description) return "";
+  if (!description) return '';
 
   return description
-    .replace(/\n\s+/g, "\n") // Remove leading whitespace from lines
-    .replace(/^\s+|\s+$/g, "") // Trim start and end
-    .replace(/\n{3,}/g, "\n\n"); // Collapse multiple newlines
+    .replace(/\n\s+/g, '\n') // Remove leading whitespace from lines
+    .replace(/^\s+|\s+$/g, '') // Trim start and end
+    .replace(/\n{3,}/g, '\n\n'); // Collapse multiple newlines
 }

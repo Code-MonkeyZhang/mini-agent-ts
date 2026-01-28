@@ -1,6 +1,6 @@
-import { type JsonSchema } from "../base.js";
+import { type JsonSchema } from '../base.js';
 
-export type ConnectionType = "stdio" | "sse" | "http" | "streamable_http";
+export type ConnectionType = 'stdio' | 'sse' | 'http' | 'streamable_http';
 
 export interface MCPTimeoutConfig {
   connectTimeout: number;
@@ -44,7 +44,9 @@ export type ClientConstructor = new (options: {
   version: string;
 }) => McpClient;
 
-export type TransportConstructor = new (options: Record<string, unknown>) => Closable;
+export type TransportConstructor = new (
+  options: Record<string, unknown>
+) => Closable;
 
 export interface McpServerConfig {
   description?: string;

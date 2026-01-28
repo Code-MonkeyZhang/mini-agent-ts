@@ -1,6 +1,6 @@
-import * as fs from "node:fs";
-import * as path from "node:path";
-import { fileURLToPath } from "node:url";
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 export class Logger {
   private static logFile: string | null = null;
@@ -9,13 +9,13 @@ export class Logger {
     const logsDir =
       logDir ??
       path.join(
-        path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", ".."),
-        "logs",
+        path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..'),
+        'logs'
       );
     if (!fs.existsSync(logsDir)) {
       fs.mkdirSync(logsDir, { recursive: true });
     }
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     this.logFile = path.join(logsDir, `agent-${timestamp}.log`);
     console.log(`Logging to file: ${this.logFile}`);
   }
@@ -23,14 +23,14 @@ export class Logger {
   static log(category: string, message: string, data?: any) {
     const timestamp = new Date().toISOString();
 
-    let formattedData = "";
+    let formattedData = '';
     if (data !== undefined && data !== null) {
-      if (typeof data === "string") {
+      if (typeof data === 'string') {
         // Format string data with newlines and indentation
         formattedData = `\n${data
-          .split("\n")
+          .split('\n')
           .map((line) => `  ${line}`)
-          .join("\n")}`;
+          .join('\n')}`;
       } else {
         formattedData = JSON.stringify(data, null, 2);
       }
@@ -49,25 +49,25 @@ export class Logger {
   }
 
   static logLLMRequest(request: any) {
-    this.log("LLM REQUEST", "Full Request JSON", request);
+    this.log('LLM REQUEST', 'Full Request JSON', request);
   }
 
   static logLLMResponse(response: any) {
-    this.log("LLM RESPONSE", "Full Response Data", response);
+    this.log('LLM RESPONSE', 'Full Response Data', response);
   }
 }
 
 export const sdkLoggerAdapter = {
   debug(message: string, ...args: unknown[]) {
-    Logger.log("LLM SDK", message, args.length > 0 ? args : undefined);
+    Logger.log('LLM SDK', message, args.length > 0 ? args : undefined);
   },
   info(message: string, ...args: unknown[]) {
-    Logger.log("LLM SDK", message, args.length > 0 ? args : undefined);
+    Logger.log('LLM SDK', message, args.length > 0 ? args : undefined);
   },
   warn(message: string, ...args: unknown[]) {
-    Logger.log("LLM SDK WARN", message, args.length > 0 ? args : undefined);
+    Logger.log('LLM SDK WARN', message, args.length > 0 ? args : undefined);
   },
   error(message: string, ...args: unknown[]) {
-    Logger.log("LLM SDK ERROR", message, args.length > 0 ? args : undefined);
+    Logger.log('LLM SDK ERROR', message, args.length > 0 ? args : undefined);
   },
 };

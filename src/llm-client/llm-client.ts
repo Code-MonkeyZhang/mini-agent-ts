@@ -2,13 +2,13 @@ import {
   LLMProvider,
   type LLMStreamChunk,
   type Message,
-} from "../schema/schema.js";
-import type { Tool } from "../tools/index.js";
-import { LLMClientBase } from "./llm-client-base.js";
-import { OpenAIClient } from "./openai-client.js";
-import { AnthropicClient } from "./anthropic-client.js";
+} from '../schema/schema.js';
+import type { Tool } from '../tools/index.js';
+import { LLMClientBase } from './llm-client-base.js';
+import { OpenAIClient } from './openai-client.js';
+import { AnthropicClient } from './anthropic-client.js';
 
-import type { RetryConfig } from "../config.js";
+import type { RetryConfig } from '../config.js';
 
 export class LLMClient {
   public apiKey: string;
@@ -32,11 +32,11 @@ export class LLMClient {
     this.model = model;
     this.retryConfig = retryConfig;
 
-    let fullApiBase: string = "";
+    let fullApiBase: string = '';
 
     switch (provider) {
       case LLMProvider.ANTHROPIC:
-        fullApiBase = apiBase.replace(/\/+$/, "");
+        fullApiBase = apiBase.replace(/\/+$/, '');
         this._client = new AnthropicClient(
           apiKey,
           fullApiBase,
@@ -46,7 +46,7 @@ export class LLMClient {
         break;
 
       case LLMProvider.OPENAI:
-        fullApiBase = apiBase.replace(/\/+$/, "");
+        fullApiBase = apiBase.replace(/\/+$/, '');
         this._client = new OpenAIClient(
           apiKey,
           fullApiBase,
@@ -71,11 +71,11 @@ export class LLMClient {
 
   async checkConnection(): Promise<boolean> {
     try {
-      const msgs: Message[] = [{ role: "user", content: "ping" }];
+      const msgs: Message[] = [{ role: 'user', content: 'ping' }];
       const generator = this._client.generateStream(msgs, null);
       await generator.next();
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   }

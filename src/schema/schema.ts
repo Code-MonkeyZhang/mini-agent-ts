@@ -1,8 +1,8 @@
 // ============ Enums ============
 
 export enum LLMProvider {
-  ANTHROPIC = "anthropic",
-  OPENAI = "openai",
+  ANTHROPIC = 'anthropic',
+  OPENAI = 'openai',
 }
 
 // ============ Function Calling ============
@@ -22,21 +22,21 @@ export interface ToolCall {
 
 export type Message =
   | {
-      role: "system";
+      role: 'system';
       content: string;
     }
   | {
-      role: "user";
+      role: 'user';
       content: string | ContentBlock[];
     }
   | {
-      role: "assistant";
+      role: 'assistant';
       content?: string;
       thinking?: string;
       tool_calls?: ToolCall[];
     }
   | {
-      role: "tool";
+      role: 'tool';
       content: string;
       tool_call_id: string;
       tool_name?: string;

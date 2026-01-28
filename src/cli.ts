@@ -1,12 +1,12 @@
-import * as path from "node:path";
-import * as fs from "node:fs";
-import { Command } from "commander";
-import { fileURLToPath } from "node:url";
-import { createInterface } from "node:readline/promises";
-import { Config } from "./config.js";
-import { LLMClient } from "./llm-client/llm-client.js";
-import { Logger } from "./util/logger.js";
-import { Agent } from "./agent.js";
+import * as path from 'node:path';
+import * as fs from 'node:fs';
+import { Command } from 'commander';
+import { fileURLToPath } from 'node:url';
+import { createInterface } from 'node:readline/promises';
+import { Config } from './config.js';
+import { LLMClient } from './llm-client/llm-client.js';
+import { Logger } from './util/logger.js';
+import { Agent } from './agent.js';
 import {
   BashKillTool,
   BashOutputTool,
@@ -18,35 +18,35 @@ import {
   loadMcpToolsAsync,
   setMcpTimeoutConfig,
   type Tool,
-} from "./tools/index.js";
+} from './tools/index.js';
 
 // ============ Utilities ============
 
 function getProjectVersion(): string {
   const here = path.dirname(fileURLToPath(import.meta.url));
-  const packageJsonPath = path.resolve(here, "..", "package.json");
+  const packageJsonPath = path.resolve(here, '..', 'package.json');
   try {
-    const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as {
+    const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as {
       version?: unknown;
     };
-    return typeof pkg.version === "string" ? pkg.version : "0.0.0";
+    return typeof pkg.version === 'string' ? pkg.version : '0.0.0';
   } catch {
-    return "0.0.0";
+    return '0.0.0';
   }
 }
 
 function printBanner(): void {
   const BOX_WIDTH = 58;
-  const bannerText = "🤖 Mini Agent - Multi-turn Interactive Session";
+  const bannerText = '🤖 Mini Agent - Multi-turn Interactive Session';
 
   const bannerWidth = bannerText.length;
   const totalPadding = BOX_WIDTH - bannerWidth;
   const leftPaddingCount = Math.floor(totalPadding / 2);
   const rightPaddingCount = totalPadding - leftPaddingCount;
 
-  const leftPadding = " ".repeat(Math.max(0, leftPaddingCount));
-  const rightPadding = " ".repeat(Math.max(0, rightPaddingCount));
-  const horizontalLine = "═".repeat(BOX_WIDTH);
+  const leftPadding = ' '.repeat(Math.max(0, leftPaddingCount));
+  const rightPadding = ' '.repeat(Math.max(0, rightPaddingCount));
+  const horizontalLine = '═'.repeat(BOX_WIDTH);
 
   console.log();
   console.log(`╔${horizontalLine}╗`);
@@ -59,27 +59,27 @@ function parseArgs(): { workspace: string | undefined } {
   const program = new Command();
 
   program
-    .description("Mini Agent - AI assistant with file tools and MCP support")
-    .version(getProjectVersion(), "-v, --version")
+    .description('Mini Agent - AI assistant with file tools and MCP support')
+    .version(getProjectVersion(), '-v, --version')
     .addHelpText(
-      "after",
+      'after',
       `
 Examples:
   mini-agent-ts                              # Use current directory as workspace
   mini-agent-ts --workspace /path/to/dir     # Use specific workspace directory
-      `,
+      `
     );
 
   program.option(
-    "-w, --workspace <dir>",
-    "Workspace directory (default: current directory)",
+    '-w, --workspace <dir>',
+    'Workspace directory (default: current directory)'
   );
 
   program.parse(process.argv);
   const options = program.opts();
 
   return {
-    workspace: options["workspace"] as string | undefined,
+    workspace: options['workspace'] as string | undefined,
   };
 }
 
@@ -104,9 +104,9 @@ function resolveWorkspace(args: { workspace: string | undefined }): string {
 
 async function runAgent(workspaceDir: string): Promise<void> {
   // Load Workspace dir
-  const configPath = Config.findConfigFile("config.yaml");
+  const configPath = Config.findConfigFile('config.yaml');
   if (!configPath) {
-    console.error("❌ Configuration file not found. Please run setup.");
+    console.error('❌ Configuration file not found. Please run setup.');
     process.exit(1);
   }
   const config = Config.fromYaml(configPath);
@@ -129,28 +129,28 @@ async function runAgent(workspaceDir: string): Promise<void> {
     config.llm.apiBase,
     config.llm.provider,
     config.llm.model,
-    config.llm.retry,
+    config.llm.retry
   );
 
   // Check connection
-  process.stdout.write("Checking API connection... ");
+  process.stdout.write('Checking API connection... ');
   const isConnected = await llmClient.checkConnection();
   if (isConnected) {
-    console.log("✅ OK");
+    console.log('✅ OK');
   } else {
-    console.log("❌ Failed (Check API Key/Network)");
+    console.log('❌ Failed (Check API Key/Network)');
   }
 
   // Load system prompt
   let systemPrompt: string;
-  let systemPromptPath = Config.findConfigFile(config.agent.systemPromptPath);
+  const systemPromptPath = Config.findConfigFile(config.agent.systemPromptPath);
   if (systemPromptPath && fs.existsSync(systemPromptPath)) {
-    systemPrompt = fs.readFileSync(systemPromptPath, "utf-8");
+    systemPrompt = fs.readFileSync(systemPromptPath, 'utf-8');
     console.log(`✅ Loaded system prompt`);
   } else {
     systemPrompt =
-      "You are Mini-Agent, an intelligent assistant powered by MiniMax M2 that can help users complete various tasks.";
-    console.log("⚠️  System prompt not found, using default");
+      'You are Mini-Agent, an intelligent assistant powered by MiniMax M2 that can help users complete various tasks.';
+    console.log('⚠️  System prompt not found, using default');
   }
 
   // Load Tools & MCPs
@@ -163,7 +163,7 @@ async function runAgent(workspaceDir: string): Promise<void> {
   tools.push(new BashKillTool());
 
   // Load Skills
-  console.log("Loading Claude Skills...");
+  console.log('Loading Claude Skills...');
   const skillsDir = config.tools.skillsDir;
 
   // Create directory if it doesn't exist
@@ -175,7 +175,7 @@ async function runAgent(workspaceDir: string): Promise<void> {
 
   // Load skills
   try {
-    const { SkillLoader, GetSkillTool } = await import("./skills/index.js");
+    const { SkillLoader, GetSkillTool } = await import('./skills/index.js');
     const skillLoader = new SkillLoader(skillsDir);
     const discoveredSkills = skillLoader.discoverSkills();
 
@@ -185,26 +185,26 @@ async function runAgent(workspaceDir: string): Promise<void> {
 
       // Inject skills metadata into system prompt
       const skillsMetadata = skillLoader.getSkillsMetadataPrompt();
-      systemPrompt += "\n\n" + skillsMetadata;
+      systemPrompt += `\n\n${skillsMetadata}`;
 
       // Log skills info
       Logger.log(
-        "startup",
-        "Skills Loaded:",
-        discoveredSkills.map((s) => s.name),
+        'startup',
+        'Skills Loaded:',
+        discoveredSkills.map((s) => s.name)
       );
-      Logger.log("startup", "Full System Prompt:", systemPrompt);
+      Logger.log('startup', 'Full System Prompt:', systemPrompt);
 
       console.log(`✅ Loaded ${discoveredSkills.length} skill(s)`);
     } else {
-      console.log("⚠️  No skills found in skills directory");
+      console.log('⚠️  No skills found in skills directory');
     }
   } catch (error) {
     console.error(`❌ Failed to load skills: ${error}`);
   }
 
   // Load MCPs
-  console.log("Loading MCP tools...");
+  console.log('Loading MCP tools...');
   const mcpConfig = config.tools.mcp;
   setMcpTimeoutConfig({
     connectTimeout: mcpConfig.connectTimeout,
@@ -218,25 +218,25 @@ async function runAgent(workspaceDir: string): Promise<void> {
     if (mcpTools.length > 0) {
       tools.push(...mcpTools);
       const msg = `✅ Loaded ${mcpTools.length} MCP tools (from: ${mcpConfigPath})`;
-      Logger.log("startup", msg);
+      Logger.log('startup', msg);
     } else {
-      const msg = "⚠️  No available MCP tools found";
+      const msg = '⚠️  No available MCP tools found';
       console.log(msg);
-      Logger.log("startup", msg);
+      Logger.log('startup', msg);
     }
   } else {
     const msg = `⚠️  MCP config file not found: ${config.tools.mcpConfigPath}`;
     console.log(msg);
-    Logger.log("startup", msg);
+    Logger.log('startup', msg);
   }
 
   // Init Agent
-  let agent = new Agent(
+  const agent = new Agent(
     llmClient,
     systemPrompt,
     tools,
     config.agent.maxSteps,
-    workspaceDir,
+    workspaceDir
   );
 
   const rl = createInterface({
@@ -251,13 +251,13 @@ async function runAgent(workspaceDir: string): Promise<void> {
     interrupted = true;
     rl.close();
   };
-  process.once("SIGINT", onSigint);
+  process.once('SIGINT', onSigint);
 
   try {
     while (true) {
       let raw: string;
       try {
-        raw = await rl.question("You > ");
+        raw = await rl.question('You > ');
       } catch (error) {
         if (interrupted) break;
         throw error;
@@ -266,7 +266,7 @@ async function runAgent(workspaceDir: string): Promise<void> {
       const userInput = raw.trim();
       if (!userInput) continue;
 
-      if (userInput === "exit" || userInput === "quit" || userInput === "q")
+      if (userInput === 'exit' || userInput === 'quit' || userInput === 'q')
         break;
       agent.addUserMessage(userInput);
 
@@ -275,10 +275,10 @@ async function runAgent(workspaceDir: string): Promise<void> {
       } catch (error) {
         if (error instanceof Error) {
           console.log(`\n❌ Error: ${error.message}`);
-          console.log("   Please check your API key and configuration.\n");
+          console.log('   Please check your API key and configuration.\n');
         } else {
           console.log(`\n❌ Unexpected error: ${String(error)}`);
-          console.log("   Please try again or report this issue.\n");
+          console.log('   Please try again or report this issue.\n');
         }
 
         // Remove unfinished user message
@@ -286,11 +286,11 @@ async function runAgent(workspaceDir: string): Promise<void> {
         continue;
       }
 
-      console.log("\n" + "─".repeat(60) + "\n");
+      console.log(`\n${'─'.repeat(60)}\n`);
     }
   } finally {
     // Graceful Shutdown
-    process.removeListener("SIGINT", onSigint);
+    process.removeListener('SIGINT', onSigint);
     rl.close();
     await cleanupMcpConnections();
   }

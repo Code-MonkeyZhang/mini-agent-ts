@@ -1,19 +1,19 @@
-import * as fs from "node:fs";
-import * as path from "node:path";
-import { Logger } from "../../util/logger.js";
-import { type Tool } from "../base.js";
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { Logger } from '../../util/logger.js';
+import { type Tool } from '../base.js';
 import {
   type McpConfigFile,
   type McpServerConfig,
   type ConnectionType,
-} from "./types.js";
-import { isRecord } from "./utils.js";
-import { MCPServerConnection } from "./connection.js";
+} from './types.js';
+import { isRecord } from './utils.js';
+import { MCPServerConnection } from './connection.js';
 
 // Re-export everything for external use
-export * from "./types.js";
-export * from "./utils.js";
-export * from "./connection.js";
+export * from './types.js';
+export * from './utils.js';
+export * from './connection.js';
 
 const mcpConnections: MCPServerConnection[] = [];
 
@@ -29,7 +29,7 @@ const mcpConnections: MCPServerConnection[] = [];
  * @returns A promise that resolves to an array of loaded `Tool` instances.
  */
 export async function loadMcpToolsAsync(
-  configPath: string = "mcp.json"
+  configPath: string = 'mcp.json'
 ): Promise<Tool[]> {
   const resolvedPath = path.resolve(configPath);
   if (!fs.existsSync(resolvedPath)) {
@@ -38,12 +38,12 @@ export async function loadMcpToolsAsync(
   }
 
   try {
-    const raw = fs.readFileSync(resolvedPath, "utf8");
+    const raw = fs.readFileSync(resolvedPath, 'utf8');
     const config = JSON.parse(raw) as McpConfigFile;
     const servers = config.mcpServers ?? {};
 
     if (!isRecord(servers) || Object.keys(servers).length === 0) {
-      console.log("No MCP servers configured");
+      console.log('No MCP servers configured');
       return [];
     }
 
@@ -62,19 +62,19 @@ export async function loadMcpToolsAsync(
       }
 
       // Determine connection type
-      let connectionType: ConnectionType = "stdio";
+      let connectionType: ConnectionType = 'stdio';
       const explicitType = serverConfig.type?.toLowerCase();
 
       switch (explicitType) {
-        case "stdio":
-        case "sse":
-        case "http":
-        case "streamable_http":
+        case 'stdio':
+        case 'sse':
+        case 'http':
+        case 'streamable_http':
           connectionType = explicitType;
           break;
         default:
           if (serverConfig.url) {
-            connectionType = "streamable_http";
+            connectionType = 'streamable_http';
           }
           break;
       }
@@ -102,13 +102,13 @@ export async function loadMcpToolsAsync(
 
     const totalMsg = `
 Total MCP tools loaded: ${allTools.length}`;
-    Logger.log("MCP", totalMsg.trim());
+    Logger.log('MCP', totalMsg.trim());
     return allTools;
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     const msg = `Error loading MCP config: ${message}`;
     console.log(msg);
-    Logger.debug("MCP", msg);
+    Logger.debug('MCP', msg);
     return [];
   }
 }

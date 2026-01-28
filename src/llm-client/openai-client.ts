@@ -1,9 +1,9 @@
-import OpenAI from "openai";
-import type { Message, LLMStreamChunk, ToolCall } from "../schema/index.js";
-import type { Tool } from "../tools/index.js";
-import { LLMClientBase } from "./llm-client-base.js";
-import type { RetryConfig } from "../config.js";
-import { Logger, sdkLoggerAdapter } from "../util/logger.js";
+import OpenAI from 'openai';
+import type { Message, LLMStreamChunk, ToolCall } from '../schema/index.js';
+import type { Tool } from '../tools/index.js';
+import { LLMClientBase } from './llm-client-base.js';
+import type { RetryConfig } from '../config.js';
+import { Logger, sdkLoggerAdapter } from '../util/logger.js';
 
 /**
  * LLM client using OpenAI's protocol.
@@ -33,33 +33,33 @@ export class OpenAIClient extends LLMClientBase {
    * Converts internal message format to OpenAI's message format.
    *
    * @param messages - Array of internal Message objects
-   * @returns A tuple containing [systemPrompt, apiMessages]. 
+   * @returns A tuple containing [systemPrompt, apiMessages].
    * For OpenAI API, systemPrompt is always null since system messages are included in the apiMessages array
    */
   protected override convertMessages(
     messages: Message[]
   ): [string | null, Record<string, any>[]] {
-    let apiMessages = [];
+    const apiMessages = [];
 
     for (const msg of messages) {
-      if (msg.role === "system") {
-        apiMessages.push({ role: "system", content: msg.content });
+      if (msg.role === 'system') {
+        apiMessages.push({ role: 'system', content: msg.content });
         continue;
-      } else if (msg.role === "user") {
-        apiMessages.push({ role: "user", content: msg.content });
-      } else if (msg.role === "assistant") {
+      } else if (msg.role === 'user') {
+        apiMessages.push({ role: 'user', content: msg.content });
+      } else if (msg.role === 'assistant') {
         const assistantMsg: Record<string, unknown> = {
-          role: "assistant",
+          role: 'assistant',
         };
 
         if (msg.content) {
-          assistantMsg["content"] = msg.content;
+          assistantMsg['content'] = msg.content;
         }
 
         if (msg.tool_calls && msg.tool_calls.length > 0) {
-          assistantMsg["tool_calls"] = msg.tool_calls.map((toolCall) => ({
+          assistantMsg['tool_calls'] = msg.tool_calls.map((toolCall) => ({
             id: toolCall.id,
-            type: "function",
+            type: 'function',
             function: {
               name: toolCall.function.name,
               arguments: JSON.stringify(toolCall.function.arguments ?? {}),
@@ -68,19 +68,19 @@ export class OpenAIClient extends LLMClientBase {
         }
 
         if (msg.thinking) {
-          assistantMsg["reasoning_details"] = [{ text: msg.thinking }];
+          assistantMsg['reasoning_details'] = [{ text: msg.thinking }];
         }
 
         apiMessages.push(assistantMsg);
-      } else if (msg.role === "tool") {
+      } else if (msg.role === 'tool') {
         const toolMsg: Record<string, unknown> = {
-          role: "tool",
+          role: 'tool',
           content: msg.content,
           tool_call_id: msg.tool_call_id,
         };
 
         if (msg.tool_name) {
-          toolMsg["name"] = msg.tool_name;
+          toolMsg['name'] = msg.tool_name;
         }
         apiMessages.push(toolMsg);
       }
@@ -99,7 +99,7 @@ export class OpenAIClient extends LLMClientBase {
     tools: Tool[]
   ): OpenAI.Chat.Completions.ChatCompletionTool[] {
     return tools.map((tool) => ({
-      type: "function" as const,
+      type: 'function' as const,
       function: {
         name: tool.name,
         description: tool.description,
@@ -139,14 +139,12 @@ export class OpenAIClient extends LLMClientBase {
   ): AsyncGenerator<LLMStreamChunk> {
     const requestParams = this.prepareRequest(messages, tools);
     const apiMessages = requestParams[
-      "apiMessages"
+      'apiMessages'
     ] as OpenAI.Chat.Completions.ChatCompletionMessageParam[];
     const toolSchemas =
-      requestParams["tools"] && requestParams["tools"].length > 0
-        ? this.convertTools(requestParams["tools"])
+      requestParams['tools'] && requestParams['tools'].length > 0
+        ? this.convertTools(requestParams['tools'])
         : undefined;
-
-    let stream: AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>;
 
     // Build request params
     const buildParams =
@@ -159,7 +157,7 @@ export class OpenAIClient extends LLMClientBase {
           };
         if (toolSchemas && toolSchemas.length > 0) {
           (params as any).tools = toolSchemas;
-          (params as any).tool_choice = "auto";
+          (params as any).tool_choice = 'auto';
         }
         return params;
       };
@@ -167,7 +165,7 @@ export class OpenAIClient extends LLMClientBase {
     // Create stream request (retry is handled by OpenAI SDK)
     const params = buildParams();
     Logger.logLLMRequest(params);
-    stream = await this.client.chat.completions.create(params);
+    const stream = await this.client.chat.completions.create(params);
 
     // Accumulate tool_calls from streaming chunks (like Python does)
     const toolCallAcc = new Map<
@@ -180,8 +178,8 @@ export class OpenAIClient extends LLMClientBase {
       }
     >();
 
-    let fullContent = "";
-    let fullThinking = "";
+    let fullContent = '';
+    let fullThinking = '';
     let finalFinishReason: string | undefined;
     let finalToolCalls: ToolCall[] | undefined;
     let chunkCount = 0;
@@ -211,14 +209,14 @@ export class OpenAIClient extends LLMClientBase {
       if (delta && (delta as any).tool_calls) {
         const incoming = (delta as any).tool_calls as any[];
         for (const call of incoming) {
-          const index = typeof call.index === "number" ? call.index : 0;
+          const index = typeof call.index === 'number' ? call.index : 0;
 
           if (!toolCallAcc.has(index)) {
             toolCallAcc.set(index, {
-              id: "",
-              type: "function",
-              name: "",
-              argumentsText: "",
+              id: '',
+              type: 'function',
+              name: '',
+              argumentsText: '',
             });
           }
 
@@ -244,10 +242,10 @@ export class OpenAIClient extends LLMClientBase {
             }
           }
           return {
-            id: call.id || "",
-            type: call.type || "function",
+            id: call.id || '',
+            type: call.type || 'function',
             function: {
-              name: call.name || "",
+              name: call.name || '',
               arguments: parsedArgs,
             },
           };

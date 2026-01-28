@@ -1,23 +1,20 @@
-import * as path from "node:path";
-import * as fs from "node:fs";
-import { Logger } from "./util/logger.js";
-import { Colors, drawStepHeader } from "./util/terminal.js";
-import { LLMClient } from "./llm-client/llm-client.js";
-import type { Message, ToolCall } from "./schema/index.js";
-import type { Tool, ToolResult } from "./tools/index.js";
+import * as path from 'node:path';
+import * as fs from 'node:fs';
+import { Logger } from './util/logger.js';
+import { Colors, drawStepHeader } from './util/terminal.js';
+import { LLMClient } from './llm-client/llm-client.js';
+import type { Message, ToolCall } from './schema/index.js';
+import type { Tool, ToolResult } from './tools/index.js';
 
 function buildSystemPrompt(basePrompt: string, workspaceDir: string): string {
-  if (basePrompt.includes("Current Workspace")) {
+  if (basePrompt.includes('Current Workspace')) {
     return basePrompt;
   }
-  return (
-    basePrompt +
-    `
+  return `${basePrompt}
 
 ## Current Workspace
 You are currently working in: \`${workspaceDir}\`
-All relative paths will be resolved relative to this directory.`
-  );
+All relative paths will be resolved relative to this directory.`;
 }
 
 export class Agent {
@@ -33,7 +30,7 @@ export class Agent {
     systemPrompt: string,
     tools: Tool[],
     maxSteps: number,
-    workspaceDir: string,
+    workspaceDir: string
   ) {
     this.llmClient = llmClient;
     this.maxSteps = maxSteps;
@@ -45,7 +42,7 @@ export class Agent {
 
     // Inject workspace dir into system prompt
     this.systemPrompt = buildSystemPrompt(systemPrompt, workspaceDir);
-    this.messages = [{ role: "system", content: this.systemPrompt }];
+    this.messages = [{ role: 'system', content: this.systemPrompt }];
 
     // Register tools with the agent
     for (const tool of tools) {
@@ -54,8 +51,8 @@ export class Agent {
   }
 
   addUserMessage(content: string): void {
-    Logger.log("CHAT", "User:", content);
-    this.messages.push({ role: "user", content });
+    Logger.log('CHAT', 'User:', content);
+    this.messages.push({ role: 'user', content });
   }
 
   registerTool(tool: Tool): void {
@@ -72,13 +69,13 @@ export class Agent {
 
   async executeTool(
     name: string,
-    params: Record<string, unknown>,
+    params: Record<string, unknown>
   ): Promise<ToolResult> {
     const tool = this.getTool(name);
     if (!tool) {
       return {
         success: false,
-        content: "",
+        content: '',
         error: `Unknown tool: ${name}`,
       };
     }
@@ -88,10 +85,10 @@ export class Agent {
     } catch (error) {
       const err = error as Error;
       const details = err?.message ? err.message : String(error);
-      const stack = err?.stack ? `\n\nStack:\n${err.stack}` : "";
+      const stack = err?.stack ? `\n\nStack:\n${err.stack}` : '';
       return {
         success: false,
-        content: "",
+        content: '',
         error: `Tool execution failed: ${details}${stack}`,
       };
     }
@@ -103,23 +100,23 @@ export class Agent {
       console.log();
       console.log(drawStepHeader(step + 1, this.maxSteps));
 
-      let fullContent = "";
-      let fullThinking = "";
+      let fullContent = '';
+      let fullThinking = '';
       let toolCalls: ToolCall[] | null = null;
       let isThinkingPrinted = false;
 
       const toolList = this.listTools();
       for await (const chunk of this.llmClient.generateStream(
         this.messages,
-        toolList,
+        toolList
       )) {
         if (chunk.thinking) {
           if (!isThinkingPrinted) {
             console.log();
-            console.log(`${Colors.DIM}─${"─".repeat(60)}${Colors.RESET}`);
+            console.log(`${Colors.DIM}─${'─'.repeat(60)}${Colors.RESET}`);
             console.log();
             console.log(
-              `${Colors.BOLD}${Colors.BRIGHT_MAGENTA}🧠 Thinking:${Colors.RESET}`,
+              `${Colors.BOLD}${Colors.BRIGHT_MAGENTA}🧠 Thinking:${Colors.RESET}`
             );
             isThinkingPrinted = true;
           }
@@ -128,19 +125,19 @@ export class Agent {
         }
 
         if (chunk.content) {
-          if (isThinkingPrinted && fullContent === "") {
+          if (isThinkingPrinted && fullContent === '') {
             console.log();
             console.log();
-            console.log(`${Colors.DIM}─${"─".repeat(60)}${Colors.RESET}`);
+            console.log(`${Colors.DIM}─${'─'.repeat(60)}${Colors.RESET}`);
             console.log();
             console.log(
-              `${Colors.BOLD}${Colors.BRIGHT_BLUE}📝 Response:${Colors.RESET}`,
+              `${Colors.BOLD}${Colors.BRIGHT_BLUE}📝 Response:${Colors.RESET}`
             );
-          } else if (!isThinkingPrinted && fullContent === "") {
+          } else if (!isThinkingPrinted && fullContent === '') {
             // 只有 Response，无 Thinking：1 个空行 + Response 标题
             console.log();
             console.log(
-              `${Colors.BOLD}${Colors.BRIGHT_BLUE}📝 Response:${Colors.RESET}`,
+              `${Colors.BOLD}${Colors.BRIGHT_BLUE}📝 Response:${Colors.RESET}`
             );
           }
           process.stdout.write(chunk.content);
@@ -157,7 +154,7 @@ export class Agent {
       }
 
       this.messages.push({
-        role: "assistant",
+        role: 'assistant',
         content: fullContent,
         thinking: fullThinking || undefined,
         tool_calls: toolCalls || undefined,
@@ -174,7 +171,7 @@ export class Agent {
 
         // Tool 标题
         console.log(
-          `\n${Colors.BOLD}${Colors.BRIGHT_YELLOW}🔧 Tool: ${functionName}${Colors.RESET}`,
+          `\n${Colors.BOLD}${Colors.BRIGHT_YELLOW}🔧 Tool: ${functionName}${Colors.RESET}`
         );
 
         // Arguments
@@ -183,13 +180,13 @@ export class Agent {
         for (const [key, value] of Object.entries(args)) {
           const valueStr = String(value);
           if (valueStr.length > 200) {
-            truncatedArgs[key] = valueStr.slice(0, 200) + "...";
+            truncatedArgs[key] = `${valueStr.slice(0, 200)}...`;
           } else {
             truncatedArgs[key] = value;
           }
         }
         const argsJson = JSON.stringify(truncatedArgs, null, 2);
-        for (const line of argsJson.split("\n")) {
+        for (const line of argsJson.split('\n')) {
           console.log(`   ${Colors.DIM}${line}${Colors.RESET}`);
         }
 
@@ -199,24 +196,25 @@ export class Agent {
           let resultText = result.content;
           const MAX_LENGTH = 300;
           if (resultText.length > MAX_LENGTH) {
-            resultText =
-              resultText.slice(0, MAX_LENGTH) +
-              `${Colors.DIM}...${Colors.RESET}`;
+            resultText = `${resultText.slice(
+              0,
+              MAX_LENGTH
+            )}${Colors.DIM}...${Colors.RESET}`;
           }
           console.log(
-            `${Colors.BRIGHT_GREEN}✓${Colors.RESET} ${Colors.BOLD}${Colors.BRIGHT_GREEN}Success:${Colors.RESET} ${resultText}\n`,
+            `${Colors.BRIGHT_GREEN}✓${Colors.RESET} ${Colors.BOLD}${Colors.BRIGHT_GREEN}Success:${Colors.RESET} ${resultText}\n`
           );
         } else {
           console.log(
-            `${Colors.BRIGHT_RED}✗${Colors.RESET} ${Colors.BOLD}${Colors.BRIGHT_RED}Error:${Colors.RESET} ${Colors.RED}${result.error ?? "Unknown error"}${Colors.RESET}\n`,
+            `${Colors.BRIGHT_RED}✗${Colors.RESET} ${Colors.BOLD}${Colors.BRIGHT_RED}Error:${Colors.RESET} ${Colors.RED}${result.error ?? 'Unknown error'}${Colors.RESET}\n`
           );
         }
 
         this.messages.push({
-          role: "tool",
+          role: 'tool',
           content: result.success
             ? result.content
-            : `Error: ${result.error ?? "Unknown error"}`,
+            : `Error: ${result.error ?? 'Unknown error'}`,
           tool_call_id: toolCallId,
           tool_name: functionName,
         });
