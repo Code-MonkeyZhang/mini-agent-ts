@@ -58,7 +58,7 @@ Run the following commands to deploy the project locally:
 
 ```bash
 # Clone repository
-git clone [https://github.com/Code-MonkeyZhang/Mini-Agent-TS.git](https://github.com/Code-MonkeyZhang/Mini-Agent-TS.git)
+git clone https://github.com/Code-MonkeyZhang/mini-agent-ts.git
 
 # Enter project directory
 cd Mini-Agent-TS
