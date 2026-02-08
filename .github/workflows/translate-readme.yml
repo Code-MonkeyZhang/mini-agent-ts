@@ -30,8 +30,8 @@ jobs:
       - name: Translate README
         env:
           API_KEY: ${{ secrets.LLM_API_KEY }}
-          API_BASE: "https://api.siliconflow.cn/v1"
-          MODEL: "deepseek-ai/DeepSeek-V3"
+          API_BASE: 'https://api.deepseek.com/v1'
+          MODEL: 'deepseek-chat'
         run: |
           python -c "
           import os
@@ -88,7 +88,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
+
           # 检查是否有变化
           if [[ -n $(git status -s README.md) ]]; then
             git add README.md
