@@ -1,4 +1,5 @@
 import express from 'express';
+import type { Request, Response } from 'express';
 import { createServer as createHttpServer } from 'http';
 import cors from 'cors';
 
@@ -12,11 +13,11 @@ app.use(express.urlencoded({ extended: true }));
 /**
  * Status endpoint - Returns server status and information
  * @route GET /api/status
- * @param {import('express').Request} req - Express request object
- * @param {import('express').Response} res - Express response object
+ * @param req - Express request object
+ * @param res - Express response object
  * @returns {Object} JSON response with status, timestamp, and message
  */
-app.get('/api/status', (req, res) => {
+app.get('/api/status', (_req: Request, res: Response) => {
   res.json({
     status: 'ok',
     timestamp: Date.now(),
@@ -27,11 +28,11 @@ app.get('/api/status', (req, res) => {
 /**
  * Health check endpoint - Simple liveness check
  * @route GET /health
- * @param {import('express').Request} req - Express request object
- * @param {import('express').Response} res - Express response object
+ * @param req - Express request object
+ * @param res - Express response object
  * @returns {Object} JSON response with alive status and timestamp
  */
-app.get('/health', (req, res) => {
+app.get('/health', (_req: Request, res: Response) => {
   res.json({
     alive: true,
     timestamp: Date.now(),
