@@ -1,4 +1,4 @@
-<h1 align="center"> Nano Agent</h1>
+<h1 align="center"> nano-agent </h1>
 
 <p align="center">
   <img src="https://img.shields.io/github/last-commit/Code-MonkeyZhang/nano-agent?color=ff69b4" alt="last commit">
