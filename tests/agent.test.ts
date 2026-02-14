@@ -101,16 +101,19 @@ describe('Agent (Refactored)', () => {
       type: 'thinking',
       content: 'I need to use a tool.',
     });
-    expect(events[2]).toEqual({ type: 'tool_call', toolCalls: [toolCall] });
+    // Updated property: toolCalls -> tool_calls
+    expect(events[2]).toEqual({ type: 'tool_call', tool_calls: [toolCall] });
     expect(events[3]).toEqual({ type: 'tool_start', toolCall });
 
     const resultEvent = events[4] as {
       type: 'tool_result';
-      toolCall: ToolCall;
+      toolCallId: string;
+      toolName: string;
       result: ToolResult;
     };
     expect(resultEvent.type).toBe('tool_result');
-    expect(resultEvent.toolCall).toBe(toolCall);
+    expect(resultEvent.toolCallId).toBe(toolCall.id);
+    expect(resultEvent.toolName).toBe(toolCall.function.name);
     expect(resultEvent.result.success).toBe(true);
     expect(resultEvent.result.content).toContain(
       'Executed with {"key":"value"}'
