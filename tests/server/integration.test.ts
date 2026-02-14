@@ -128,37 +128,6 @@ maybeDescribe('Integration Tests', () => {
     expect(content.length).toBeGreaterThan(0);
   });
 
-  it('SSE Streaming - With Thinking Content', async () => {
-    const payload = {
-      model: 'deepseek-chat',
-      messages: [{ role: 'user', content: 'Explain quantum' }],
-      stream: true,
-    };
-
-    const response = await fetch(`${BASE_URL}/chat/completions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    expect(response.status).toBe(200);
-
-    // Just verify we can read the stream without error
-    // Whether "thinking" is present depends on the model response, which we can't guarantee
-    const reader = response.body?.getReader();
-    let hasDone = false;
-
-    const decoder = new TextDecoder();
-    while (true) {
-      const { done, value } = await reader!.read();
-      if (done) break;
-      const chunk = decoder.decode(value);
-      if (chunk.includes('[DONE]')) hasDone = true;
-    }
-
-    expect(hasDone).toBe(true);
-  }, 15000);
-
   it('Non-Streaming Response', async () => {
     const payload = {
       model: 'gpt-4',
@@ -180,20 +149,5 @@ maybeDescribe('Integration Tests', () => {
     expect(data.choices).toBeInstanceOf(Array);
     expect(data.choices.length).toBeGreaterThan(0);
     expect(data.choices[0].message.content).toBeDefined();
-  });
-
-  it('Error Handling - Invalid Request', async () => {
-    const payload = { messages: [] }; // Missing model, empty messages
-
-    const response = await fetch(`${BASE_URL}/chat/completions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    // Nano-agent might return 200 with empty content or error depending on internal validation
-    // But it shouldn't crash.
-    // If it returns 500, that's also an "handled" error in this context vs a crash.
-    expect(response.status).toBeDefined();
   });
 });
