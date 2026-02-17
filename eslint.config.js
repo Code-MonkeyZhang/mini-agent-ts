@@ -58,7 +58,7 @@ export default [
       '@typescript-eslint/no-unnecessary-type-assertion': 'error',
       '@typescript-eslint/no-unnecessary-type-constraint': 'error',
       '@typescript-eslint/no-inferrable-types': 'off',
-      'no-console': 'warn',
+      'no-console': 'off',
       'no-debugger': 'warn',
       'no-var': 'error',
       'prefer-const': 'error',

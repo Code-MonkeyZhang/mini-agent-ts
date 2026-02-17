@@ -143,17 +143,17 @@ export class Config {
     return new Config(parsedData);
   }
 
-   /**
-    * priority search for config file .
-    *
-    * Search order:
-    * 1. Current working directory: `./config/{filename}`
-    * 2. User home directory: `~/.mini-agent-ts/config/{filename}`
-    * 3. Package directory: `{package_root}/config/{filename}`
-    *
-    * @param filename - The name of file to find (e.g., "config.yaml")
-    * @returns The absolute path to file if found, otherwise null
-    */
+  /**
+   * Priority search for config file
+   *
+   * Search order:
+   * 1. Current working directory: `./config/{filename}`
+   * 2. User home directory: `~/.mini-agent-ts/config/{filename}`
+   * 3. Package directory: `{package_root}/config/{filename}`
+   *
+   * @param filename - The name of file to find (e.g., "config.yaml")
+   * @returns The absolute path to file if found, otherwise null
+   */
   static findConfigFile(filename: string): string | null {
     const devConfig = path.join(process.cwd(), 'config', filename);
     if (fs.existsSync(devConfig)) {
