@@ -33,10 +33,10 @@ If you have an idea for a new feature, please create an Issue first to discuss i
 1. Fork this repository.
 2. Clone your fork:
 
-   ```bash
-   git clone https://github.com/Code-MonkeyZhang/nano-agent.git
-   cd nano-agent
-   ```
+    ```bash
+    git clone https://github.com/Code-MonkeyZhang/mini-agent-ts.git
+    cd mini-agent-ts
+    ```
 
 3. Create a new branch:
 
@@ -235,7 +235,7 @@ describe('BashTool', () => {
 ## Project Structure
 
 ```
-nano-agent/
+mini-agent-ts/
 ├── src/              # Source code
 │   ├── agent.ts      # Agent implementation
 │   ├── cli.ts        # Command-line interface

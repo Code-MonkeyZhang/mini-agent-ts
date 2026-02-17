@@ -8,8 +8,8 @@ import type { Message } from '../src/schema/schema.js';
  * LLM API Integration Test
  *
  * This is an integration test that will make real calls to LLM API.
- * Before running, ensure `nano-agent/config/config.yaml` is configured correctly
- * (when running from `nano-agent/`, the path is `./config/config.yaml`) and that
+ * Before running, ensure `mini-agent-ts/config/config.yaml` is configured correctly
+ * (when running from `mini-agent-ts/`, path is `./config/config.yaml`) and that
  * your environment allows network access.
  */
 const configPath = Config.findConfigFile('config.yaml');

@@ -143,17 +143,17 @@ export class Config {
     return new Config(parsedData);
   }
 
-  /**
-   * priority search for config file .
-   *
-   * Search order:
-   * 1. Current working directory: `./config/{filename}`
-   * 2. User home directory: `~/.mini-agent-ts/config/{filename}`
-   * 3. Package directory: `{package_root}/config/{filename}`
-   *
-   * @param filename - The name of the file to find (e.g., "config.yaml")
-   * @returns The absolute path to the file if found, otherwise null
-   */
+   /**
+    * priority search for config file .
+    *
+    * Search order:
+    * 1. Current working directory: `./config/{filename}`
+    * 2. User home directory: `~/.mini-agent-ts/config/{filename}`
+    * 3. Package directory: `{package_root}/config/{filename}`
+    *
+    * @param filename - The name of file to find (e.g., "config.yaml")
+    * @returns The absolute path to file if found, otherwise null
+    */
   static findConfigFile(filename: string): string | null {
     const devConfig = path.join(process.cwd(), 'config', filename);
     if (fs.existsSync(devConfig)) {
@@ -161,7 +161,7 @@ export class Config {
     }
 
     const homeDir = process.env['HOME'] || process.env['USERPROFILE'] || '';
-    const userConfig = path.join(homeDir, '.nano-agent', 'config', filename);
+    const userConfig = path.join(homeDir, '.mini-agent-ts', 'config', filename);
     if (fs.existsSync(userConfig)) {
       return userConfig;
     }

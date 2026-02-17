@@ -179,7 +179,7 @@ export class MCPServerConnection {
       const transport = await this.createTransport();
       const ClientCtor = await loadClientConstructor();
       const client = new ClientCtor({
-        name: 'nano-agent',
+        name: 'mini-agent-ts',
         version: '1.0.0',
       }) as unknown as McpClient;
 
