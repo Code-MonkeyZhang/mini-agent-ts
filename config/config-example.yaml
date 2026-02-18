@@ -2,28 +2,30 @@
 
 # ===== LLM Configuration =====
 # MiniMax API Configuration
-# Get API key from: https://www.minimaxi.com/user-center/basic-information/interface-key
+# MiniMax provides both global and China platforms:
+# - Global: https://platform.minimax.io -> api_base: https://api.minimax.io
+# - China: https://platform.minimaxi.com -> api_base: https://api.minimaxi.com
 apiKey: 'YOUR_API_KEY_HERE'
-apiBase: 'https://api.minimaxi.com/v1/'  # Note the trailing slash /
+apiBase: 'https://api.minimaxi.com/v1/' # Note the trailing slash /
 model: 'MiniMax-M2.5'
-provider: 'openai'  # MiniMax uses OpenAI-style authentication
+provider: 'openai' # MiniMax uses OpenAI-style authentication
 
 # ===== Logging Configuration =====
-enableLogging: false  # Enable file logging to project-root/logs/
+enableLogging: false # Enable file logging to project-root/logs/
 
 # ===== Agent Configuration =====
-maxSteps: 100  # Maximum execution steps
-systemPromptPath: 'system_prompt.md'  # System prompt file (same config directory)
+maxSteps: 100 # Maximum execution steps
+systemPromptPath: 'system_prompt.md' # System prompt file (same config directory)
 
 # ===== Retry Configuration =====
 retry:
-  enabled: true  # Enable retry mechanism
-  maxRetries: 3  # Maximum number of retries
+  enabled: true # Enable retry mechanism
+  maxRetries: 3 # Maximum number of retries
 
 # ===== Tools Configuration =====
 tools:
-  skillsDir: './skills'  # Directory containing skills (each skill is a folder with SKILL.md)
-  mcpConfigPath: 'mcp.json'  # MCP configuration file path
+  skillsDir: './skills' # Directory containing skills (each skill is a folder with SKILL.md)
+  mcpConfigPath: 'mcp.json' # MCP configuration file path
   mcp:
     connectTimeout: 10.0
     executeTimeout: 60.0
