@@ -13,7 +13,7 @@
 
 > This project is a TypeScript implementation of MiniMax's open-source [Mini-Agent](https://github.com/MiniMax-AI/Mini-Agent) project.
 
-**Mini Agent TS** is a terminal LLM Agent that supports extending capabilities through **Agent Skills** and **MCP (Model Context Protocol)**. It is compatible with both Anthropic and OpenAI protocols, featuring native file operations and command execution capabilities, making it an all-purpose AI assistant for developers in the terminal environment.
+**Mini Agent TS** is a minimal and simple terminal LLM Agent that includes most features needed for a basic Agent. It supports **Agent Skills** and **MCP (Model Context Protocol)**, and is compatible with both Anthropic and OpenAI protocols. With native file operations and command execution capabilities, it provides an all-purpose AI assistant for developers in the terminal environment. Based on this project, you can quickly build an LLM Agent and learn Agent implementation principles.
 
 ---
 
@@ -84,15 +84,15 @@ cp config/config-example.yaml config/config.yaml
 
 ```bash
 # config/config.yaml
-
+# 
 # Enter your API Key
-api_key: "YOUR_API_KEY_HERE" # Replace with your LLM provider API Key
-api_base: "https://api.minimax.io/anthropic" # Replace with your base url
-
+apiKey: "YOUR_API_KEY_HERE" # Replace with your LLM provider API Key
+apiBase: "https://api.minimaxi.com/v1/" # Replace with your base url
+# 
 # Model and provider SDK format
-model: "MiniMax-M2"
-provider: "anthropic" # "anthropic" or "openai"
-
+model: "MiniMax-M2.5"
+provider: "openai"  # MiniMax uses OpenAI-style authentication
+# 
 # Logging configuration (optional)
 enableLogging: false # Set to true to enable logging, logs saved in logs/ folder at project root
 ```

@@ -95,7 +95,7 @@ const ConfigSchema = z
 
 // ============ Types ============
 
-export type RetryConfig = z.infer<typeof RetrySchema>; // 创建一个名为 RetryConfig 的类型，它包含了 RetrySchema 中定义的所有字段
+export type RetryConfig = z.infer<typeof RetrySchema>;
 export type LoggingConfig = z.infer<typeof ConfigSchema>['logging'];
 export type ToolsConfig = z.infer<typeof ToolsSchema>;
 export type LLMConfig = z.infer<typeof ConfigSchema>['llm'];

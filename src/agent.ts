@@ -23,7 +23,7 @@ export class Agent {
   public maxSteps: number;
   public messages: Message[];
   public workspaceDir: string;
-  public tools: Map<string, Tool>; // Agent stores all tools in a Map
+  public tools: Map<string, Tool>;
 
   constructor(
     llmClient: LLMClient,

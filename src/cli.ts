@@ -149,7 +149,7 @@ async function runAgent(workspaceDir: string): Promise<void> {
     console.log(`✅ Loaded system prompt`);
   } else {
     systemPrompt =
-      'You are Mini-Agent, an intelligent assistant powered by MiniMax M2 that can help users complete various tasks.';
+      'You are Mini Agent TS, an intelligent assistant powered by MiniMax M2 that can help users complete various tasks.';
     console.log('⚠️  System prompt not found, using default');
   }
 
@@ -230,7 +230,6 @@ async function runAgent(workspaceDir: string): Promise<void> {
     Logger.log('startup', msg);
   }
 
-  // Init Agent
   const agent = new Agent(
     llmClient,
     systemPrompt,

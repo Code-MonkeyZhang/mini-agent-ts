@@ -86,12 +86,12 @@ cp config/config-example.yaml config/config.yaml
 # config/config.yaml
 
 # 填入你的 API Key
-api_key: "YOUR_API_KEY_HERE" # 替换为你的 LLM provider API Key
-api_base: "https://api.minimax.io/anthropic" # 替换为你的base url
+apiKey: "YOUR_API_KEY_HERE" # 替换为你的 LLM provider API Key
+apiBase: "https://api.minimaxi.com/v1/" # 替换为你的base url
 
 # 模型和提供商SDK的形式
-model: "MiniMax-M2"
-provider: "anthropic" # "anthropic" 或 "openai"
+model: "MiniMax-M2.5"
+provider: "openai"  # MiniMax 使用 OpenAI 风格认证
 
 # 日志配置（可选）
 enableLogging: false # 设置为 true 以启用日志记录功能，日志将保存在项目根目录的 logs/ 文件夹下
