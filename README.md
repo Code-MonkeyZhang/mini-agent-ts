@@ -103,8 +103,17 @@ If you want the Agent to operate only within a specific project directory (to pr
 
 ## 🔌 MCP Servers
 
-This project supports adding external tools to the Agent via the MCP protocol. The following example shows how to add a time server:
-Edit `config/mcp.json`:
+This project supports adding external tools to the Agent via the MCP protocol.
+
+### Setup MCP Configuration
+
+First, copy the example MCP configuration file:
+
+```bash
+cp config/mcp-example.json config/mcp.json
+```
+
+Then edit `config/mcp.json` to configure your MCP servers. The following example shows how to add a time server:
 
 ```json
 {

@@ -13,17 +13,17 @@
 
 > 本项目是基于 MiniMax 开源的 [Mini-Agent](https://github.com/MiniMax-AI/Mini-Agent) 项目的 TypeScript 实现版本。
 
-**Mini Agent TS** 是一个简单的终端 LLM Agent，支持通过 **Agent Skills** 和 **MCP (Model Context Protocol)** 扩展能力。它不仅兼容 Anthropic 和 OpenAI 协议，还具备原生文件操作与命令行执行的能力，是开发者在终端环境下的全能 AI 助手。
+**Mini Agent TS** 是一个极简的终端 LLM Agent, 包含一个最简单Agent所需要的大部分功能。它兼容 Anthropic 和 OpenAI 协议，支持 **Agent Skills** 和 **MCP**，还具备原生文件操作与命令行执行的能力. 基于这个项目可以快速搭建一个LLM Agent并且学习Agent实现原理.
 
 ---
 
 ## ✨ 核心特性
 
 - 🔄 **ReAct 模式**: 支持 ReAct 的 Agent 循环机制，能进行多步推理并循环调用多种工具完成复杂任务。
-- 🧠 **交错思维链**: 使 Agent 的推理过程与工具调用紧密结合。
 - 🔌 **MCP 协议支持**: 轻松连接外部工具生态，扩展 Agent 功能。
 - 🛠️ **Agent Skills**: 支持通过专业知识库、工作流和工具集来自定义 Agent 技能，打造领域专家。
 - 🌐 **自定义供应商**: 支持 Anthropic 和 OpenAI SDK，自由接入任何兼容协议的 LLM 供应商。
+- 🧠 **交错思维链**: 使 Agent 的推理过程与工具调用紧密结合。
 
 ---
 
@@ -103,8 +103,17 @@ enableLogging: false # 设置为 true 以启用日志记录功能，日志将保
 
 ## 🔌 MCP 服务器
 
-本项目支持通过 MCP 协议给 Agent 添加外部工具。下面示例展示如何添加一个 time server：
-编辑 config/mcp.json：
+本项目支持通过 MCP 协议给 Agent 添加外部工具。
+
+### 设置 MCP 配置
+
+首先，复制示例 MCP 配置文件：
+
+```bash
+cp config/mcp-example.json config/mcp.json
+```
+
+然后编辑 `config/mcp.json` 来配置您的 MCP 服务器。下面示例展示如何添加一个 time server：
 
 ```json
 {
@@ -120,7 +129,7 @@ enableLogging: false # 设置为 true 以启用日志记录功能，日志将保
 
 ## 🧠 Agent Skills
 
-本项目支持 Agent Skills, 允许用户为 Agent 加入特定功能的“操作手册”。为了加入skill,你需要在项目根目录或指定位置创建 skills 目录。将Skill文件放入该目录。同时确保 config.yaml 中启用了正确的skill路径：
+本项目支持 Agent Skills, 允许用户为 Agent 加入特定功能的Prompt。为了加入skill,你需要在项目根目录或指定位置创建 skills 目录。将Skill文件放入该目录。同时确保 config.yaml 中启用了正确的skill路径：
 
 ```bash
 tools:
