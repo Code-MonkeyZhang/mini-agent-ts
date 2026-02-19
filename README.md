@@ -1,119 +1,98 @@
-<h1 align="center"> mini-agent-ts </h1>
-
-<p align="center">
-  <img src="https://img.shields.io/github/last-commit/Code-MonkeyZhang/mini-agent-ts?color=ff69b4" alt="last commit">
-  <img src="https://img.shields.io/badge/Language-TypeScript-blue.svg" alt="typescript">
-  <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="license">
-  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome">
-</p>
-
-<p align="center">
-  <a href="./README.md">English</a> | <a href="./README_CN.md">简体中文</a>
-</p>
+<div align="center">
+  <img src="mini-agent-logo.jpg" alt="mini-agent-ts" width="500">
+  <h1>mini-agent-ts</h1>
+  <p>
+    <img src="https://img.shields.io/github/last-commit/Code-MonkeyZhang/mini-agent-ts?color=ff69b4" alt="last commit">
+    <img src="https://img.shields.io/badge/language-TypeScript-blue" alt="TypeScript">
+    <img src="https://img.shields.io/badge/node-≥18-blue" alt="Node.js">
+    <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
+  </p>
+</div>
 
 > This project is a TypeScript implementation of MiniMax's open-source [Mini-Agent](https://github.com/MiniMax-AI/Mini-Agent) project.
 
-**Mini Agent TS** is a minimal and simple terminal LLM Agent that includes most features needed for a basic Agent. It supports **Agent Skills** and **MCP (Model Context Protocol)**, and is compatible with both Anthropic and OpenAI protocols. With native file operations and command execution capabilities, it provides an all-purpose AI assistant for developers in the terminal environment. Based on this project, you can quickly build an LLM Agent and learn Agent implementation principles.
+**mini-agent-ts** is a minimal and powerful terminal AI Agent with **~2,000** lines of core code. It supports **Agent Skills**, **MCP**, and multiple LLM providers (OpenAI/Anthropic compatible). Built with native file operations and command execution tools, it's perfect for developers who want to learn Agent implementation or build their own AI assistant.
 
 ---
 
-## ✨ Core Features
+## ✨ Key Features
 
-- 🔄 **ReAct Mode**: Supports ReAct Agent loop mechanism for multi-step reasoning and tool calling to complete complex tasks.
-- 🧠 **Interleaved Chain of Thought**: Tightly integrates Agent's reasoning process with tool calls.
-- 🔌 **MCP Protocol Support**: Easily connect to external tool ecosystems and extend Agent capabilities.
-- 🛠️ **Agent Skills**: Customize Agent skills through professional knowledge bases, workflows, and toolsets to build domain experts.
-- 🌐 **Custom Providers**: Supports Anthropic and OpenAI SDKs, with freedom to connect to any LLM provider compatible with these protocols.
-
----
-
-## 📂 Project Structure
-
-```
-mini-agent-ts/
-├── src/
-│   ├── agent.ts           # Agent core logic
-│   ├── cli.ts             # CLI entry point
-│   ├── config.ts          # Configuration loading and parsing
-│   ├── llm-client/        # LLM client adapters
-│   ├── schema/            # Data model definitions
-│   ├── skills/            # Skills loader
-│   ├── tools/             # Built-in toolset
-│   └── util/
-├── config/
-│   ├── config.yaml        # Main configuration file
-│   └── mcp.json           # MCP server configuration
-├── skills/                # User-defined skills directory
-├── tests/                 # Test files
-└── logs/                  # Runtime logs (generated when logging is enabled)
-```
+- 🔄 **ReAct Mode**: Multi-step reasoning and tool calling for complex tasks
+- 🧠 **Interleaved Chain of Thought**: Tightly integrates reasoning with tool execution
+- 🔌 **MCP Protocol**: Connect to external tool ecosystems seamlessly
+- 🛠️ **Agent Skills**: Customize domain expertise through knowledge bases
+- 🌐 **Multi-Provider**: OpenAI, Anthropic, MiniMax, DeepSeek, and any OpenAI-compatible API
 
 ---
 
-## 🛠️ Quick Start
-
-### 1. Clone Project and Install Dependencies
-
-Run the following commands to deploy the project locally:
+## 📦 Installation
 
 ```bash
 # Clone repository
 git clone https://github.com/Code-MonkeyZhang/mini-agent-ts.git
-
-# Enter project directory
 cd mini-agent-ts
 
 # Install dependencies
 npm install
-```
 
-### 2. Build and Link to System Commands
-
-```bash
+# Build and link
 npm run build && npm link
 ```
 
-## Project Configuration
+---
 
-Initialize the configuration file with your API information:
+## 🚀 Quick Start
+
+**1. Copy configuration**
 
 ```bash
-# Copy example configuration
 cp config/config-example.yaml config/config.yaml
 ```
 
-```bash
-# config/config.yaml
-# 
-# Enter your API Key
-apiKey: "YOUR_API_KEY_HERE" # Replace with your LLM provider API Key
-apiBase: "https://api.minimaxi.com/v1/" # Replace with your base url
-# 
-# Model and provider SDK format
-model: "MiniMax-M2.5"
-provider: "openai"  # MiniMax uses OpenAI-style authentication
-# 
-# Logging configuration (optional)
-enableLogging: false # Set to true to enable logging, logs saved in logs/ folder at project root
+**2. Configure** (`config/config.yaml`)
+
+_Set your API key and endpoint_:
+
+```yaml
+apiKey: 'your-api-key-here'
+apiBase: 'https://api.minimaxi.com/v1/' # or your provider's endpoint
+
+# Model and provider
+model: 'MiniMax-M2.1'
+provider: 'openai' # openai or anthropic
 ```
 
-### Specify Workspace
+**3. Run**
 
-If you want the Agent to operate only within a specific project directory (to prevent accidental deletion or modification of other files), use:
+```bash
+mini-agent-ts
+```
 
-## 🔌 MCP Servers
+That's it! You have a working AI Agent in your terminal.
 
-This project supports adding external tools to the Agent via the MCP protocol.
+---
 
-### Setup MCP Configuration
+## 🔧 Configuration
 
-First, copy the example MCP configuration file:
+### Environment Variables
+
+| Variable        | Description                       | Default  |
+| --------------- | --------------------------------- | -------- |
+| `apiKey`        | Your LLM provider API key         | Required |
+| `apiBase`       | API endpoint URL                  | Required |
+| `model`         | Model name                        | Required |
+| `provider`      | SDK type: `openai` or `anthropic` | `openai` |
+| `enableLogging` | Enable runtime logging            | `false`  |
+
+### MCP Servers
+
+Add external tools via MCP protocol:
 
 ```bash
 cp config/mcp-example.json config/mcp.json
 ```
 
-Then edit `config/mcp.json` to configure your MCP servers. The following example shows how to add a time server:
+Edit `config/mcp.json`:
 
 ```json
 {
@@ -121,36 +100,59 @@ Then edit `config/mcp.json` to configure your MCP servers. The following example
     "time-server": {
       "command": "uvx",
       "args": ["mcp-server-time"],
-      "description": "Provides current time query tools"
+      "description": "Provides current time query"
     }
   }
 }
 ```
 
-## 🧠 Agent Skills
+### Agent Skills
 
-This project supports Agent Skills, allowing users to add "operation manuals" with specific functionality to the Agent. To add a skill, you need to create a skills directory in the project root or a specified location. Place your skill files in that directory. Also ensure the correct skills path is enabled in `config.yaml`:
+Add custom skills to extend Agent capabilities:
 
-```bash
+```yaml
 tools:
-  skillsDir: "./skills"
+  skillsDir: './skills'
+```
+
+Create skill files in `skills/` directory following the [Agent Skills](https://agentskills.io) format.
+
+---
+
+## 📖 Project Structure
+
+```
+mini-agent-ts/
+├── src/
+│   ├── agent.ts        # Core agent loop (ReAct)
+│   ├── cli.ts          # CLI entry point
+│   ├── config.ts       # Configuration loader
+│   ├── llm-client/     # LLM provider adapters
+│   ├── schema/         # Data models
+│   ├── skills/         # Skills loader
+│   └── tools/          # Built-in tools
+├── config/
+│   ├── config.yaml     # Main config
+│   └── mcp.json        # MCP servers
+├── skills/             # User skills
+└── tests/              # Tests
 ```
 
 ---
 
-## 🤝 Contributing & Feedback
+## 🤝 Contributing
 
-Issues and Pull Requests are welcome to improve this project.
-
-### Made with ❤️ by Code-MonkeyZhang
+Issues and Pull Requests are welcome!
 
 ---
 
-## 📚 Reference Documentation
+## 📚 Reference
 
-The implementation of this project references the following official documentation:
+- [OpenAI API](https://platform.openai.com/docs/api-reference/chat)
+- [Anthropic Messages API](https://docs.anthropic.com/en/api/messages)
+- [Model Context Protocol](https://modelcontextprotocol.io)
+- [Agent Skills](https://agentskills.io)
 
-- [OpenAI API Reference](https://platform.openai.com/docs/api-reference/chat)
-- [Anthropic Messages API](https://platform.claude.com/docs/en/api/messages/create)
-- [Model Context Protocol Docs](https://modelcontextprotocol.io/docs/getting-started/intro)
-- [Agent Skills Documentation](https://agentskills.io/home)
+---
+
+### Made with ❤️ by [Code-MonkeyZhang](https://github.com/Code-MonkeyZhang)
