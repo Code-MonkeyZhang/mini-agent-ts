@@ -35,6 +35,57 @@ function getProjectVersion(): string {
   }
 }
 
+/**
+ * Find the project root directory by searching for package.json.
+ * Starts from the current file location and searches upward.
+ *
+ * @returns The absolute path to the project root directory
+ * @throws Error if package.json cannot be found
+ */
+function findProjectRoot(): string {
+  let currentDir = path.dirname(fileURLToPath(import.meta.url));
+
+  while (true) {
+    const packageJsonPath = path.join(currentDir, 'package.json');
+    if (fs.existsSync(packageJsonPath)) {
+      return currentDir;
+    }
+
+    const parentDir = path.resolve(currentDir, '..');
+    if (parentDir === currentDir) {
+      throw new Error('Cannot find project root (package.json not found)');
+    }
+    currentDir = parentDir;
+  }
+}
+
+/**
+ * Find skills directory with fallback mechanism.
+ *
+ * Search order:
+ * 1. Config-specified directory
+ * 2. Package installation directory
+ *
+ * @param skillsDirConfig - The skillsDir from config (default: './skills')
+ * @returns The absolute path to skills directory
+ */
+function findSkillsDir(skillsDirConfig: string): string {
+  const cwdSkillsDir = path.resolve(skillsDirConfig);
+  if (fs.existsSync(cwdSkillsDir)) {
+    return cwdSkillsDir;
+  }
+
+  const projectRoot = findProjectRoot();
+  const packageSkillsDir = path.join(projectRoot, 'skills');
+
+  if (fs.existsSync(packageSkillsDir)) {
+    console.log(`📦 Using built-in skills from: ${packageSkillsDir}`);
+    return packageSkillsDir;
+  }
+
+  return cwdSkillsDir;
+}
+
 function printBanner(): void {
   const BOX_WIDTH = 58;
   const bannerText = '🤖 Mini Agent TS - Multi-turn Interactive Session';
@@ -164,9 +215,9 @@ async function runAgent(workspaceDir: string): Promise<void> {
 
   // Load Skills
   console.log('Loading Claude Skills...');
-  const skillsDir = config.tools.skillsDir;
+  const skillsDir = findSkillsDir(config.tools.skillsDir);
 
-  // Create directory if it doesn't exist
+  // Create directory if neither CWD nor package directory has skills
   if (!fs.existsSync(skillsDir)) {
     console.log(`⚠️  Skills directory does not exist: ${skillsDir}`);
     fs.mkdirSync(skillsDir, { recursive: true });
