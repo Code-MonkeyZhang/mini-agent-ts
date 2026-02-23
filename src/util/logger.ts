@@ -6,18 +6,21 @@ export class Logger {
   private static logFile: string | null = null;
 
   static initialize(logDir?: string) {
-    const logsDir =
-      logDir ??
-      path.join(
-        path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..'),
-        'logs'
-      );
+    const logsDir = logDir ?? this.getLogsDirectory();
     if (!fs.existsSync(logsDir)) {
       fs.mkdirSync(logsDir, { recursive: true });
     }
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const now = new Date();
+    const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}-${String(now.getSeconds()).padStart(2, '0')}`;
     this.logFile = path.join(logsDir, `agent-${timestamp}.log`);
     console.log(`Logging to file: ${this.logFile}`);
+  }
+
+  static getLogsDirectory(): string {
+    return path.join(
+      path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..'),
+      'logs'
+    );
   }
 
   static log(category: string, message: string, data?: any) {
