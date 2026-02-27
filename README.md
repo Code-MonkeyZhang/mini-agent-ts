@@ -1,6 +1,6 @@
 <div align="center">
   <img src="mini-agent-logo.jpg" alt="mini-agent-ts" width="500">
-  <h1>mini-agent-ts</h1>
+  <h1>mini-agent-ts: A minimum Terminal LLM Agent</h1>
   <p>
     <img src="https://img.shields.io/github/last-commit/Code-MonkeyZhang/mini-agent-ts?color=ff69b4" alt="last commit">
     <img src="https://img.shields.io/badge/language-TypeScript-blue" alt="TypeScript">
