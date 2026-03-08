@@ -71,7 +71,7 @@ export class SkillLoader {
 
       const { frontmatterText, body } = extracted;
 
-      let frontmatter: any;
+      let frontmatter: unknown;
       try {
         frontmatter = yaml.parse(frontmatterText);
       } catch (error) {

@@ -1,10 +1,9 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs';
-import { Logger } from './util/logger.js';
+import { ToolLoopAgent, stepCountIs } from 'ai';
+import type { LanguageModel, ModelMessage } from 'ai';
 import { Colors, drawStepHeader } from './util/terminal.js';
-import { LLMClient } from './llm-client/llm-client.js';
-import type { Message, ToolCall } from './schema/index.js';
-import type { Tool, ToolResult } from './tools/index.js';
+import { Logger } from './util/logger.js';
 
 function buildSystemPrompt(basePrompt: string, workspaceDir: string): string {
   if (basePrompt.includes('Current Workspace')) {
@@ -17,37 +16,47 @@ You are currently working in: \`${workspaceDir}\`
 All relative paths will be resolved relative to this directory.`;
 }
 
+export interface AgentConfig {
+  model: LanguageModel;
+  systemPrompt: string;
+  maxSteps: number;
+  workspaceDir: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tools: Record<string, any>;
+}
+
 export class Agent {
-  public llmClient: LLMClient;
-  public systemPrompt: string;
+  public model: LanguageModel;
+  public systemPrompt!: string;
   public maxSteps: number;
-  public messages: Message[];
   public workspaceDir: string;
-  public tools: Map<string, Tool>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public tools: Record<string, any>;
+  public messages: ModelMessage[];
 
-  constructor(
-    llmClient: LLMClient,
-    systemPrompt: string,
-    tools: Tool[],
-    maxSteps: number,
-    workspaceDir: string
-  ) {
-    this.llmClient = llmClient;
-    this.maxSteps = maxSteps;
-    this.tools = new Map();
+  private agent: ToolLoopAgent;
+  private step = 0;
 
-    // Ensure workspace exists
-    this.workspaceDir = path.resolve(workspaceDir);
+  constructor(config: AgentConfig) {
+    this.model = config.model;
+    this.maxSteps = config.maxSteps;
+    this.workspaceDir = path.resolve(config.workspaceDir);
+    this.tools = config.tools;
+
     fs.mkdirSync(this.workspaceDir, { recursive: true });
 
-    // Inject workspace dir into system prompt
-    this.systemPrompt = buildSystemPrompt(systemPrompt, workspaceDir);
-    this.messages = [{ role: 'system', content: this.systemPrompt }];
+    const fullSystemPrompt = buildSystemPrompt(
+      config.systemPrompt,
+      this.workspaceDir
+    );
+    this.messages = [{ role: 'system', content: fullSystemPrompt }];
 
-    // Register tools with the agent
-    for (const tool of tools) {
-      this.registerTool(tool);
-    }
+    this.agent = new ToolLoopAgent({
+      model: this.model,
+      tools: this.tools,
+      instructions: fullSystemPrompt,
+      stopWhen: stepCountIs(this.maxSteps),
+    });
   }
 
   addUserMessage(content: string): void {
@@ -55,62 +64,38 @@ export class Agent {
     this.messages.push({ role: 'user', content });
   }
 
-  registerTool(tool: Tool): void {
-    this.tools.set(tool.name, tool);
-  }
-
-  getTool(name: string): Tool | undefined {
-    return this.tools.get(name);
-  }
-
-  listTools(): Tool[] {
-    return Array.from(this.tools.values());
-  }
-
-  async executeTool(
-    name: string,
-    params: Record<string, unknown>
-  ): Promise<ToolResult> {
-    const tool = this.getTool(name);
-    if (!tool) {
-      return {
-        success: false,
-        content: '',
-        error: `Unknown tool: ${name}`,
-      };
-    }
-
-    try {
-      return await tool.execute(params);
-    } catch (error) {
-      const err = error as Error;
-      const details = err?.message ? err.message : String(error);
-      const stack = err?.stack ? `\n\nStack:\n${err.stack}` : '';
-      return {
-        success: false,
-        content: '',
-        error: `Tool execution failed: ${details}${stack}`,
-      };
-    }
-  }
-
   async run(): Promise<string> {
-    for (let step = 0; step < this.maxSteps; step++) {
-      // Step Header
-      console.log();
-      console.log(drawStepHeader(step + 1, this.maxSteps));
+    const userMessages = this.messages.filter((m) => m.role === 'user');
+    const lastUserMessage = userMessages[userMessages.length - 1];
+    if (!lastUserMessage) {
+      return 'No user message to process';
+    }
 
-      let fullContent = '';
-      let fullThinking = '';
-      let toolCalls: ToolCall[] | null = null;
-      let isThinkingPrinted = false;
+    this.step++;
+    console.log();
+    console.log(drawStepHeader(this.step, this.maxSteps));
 
-      const toolList = this.listTools();
-      for await (const chunk of this.llmClient.generateStream(
-        this.messages,
-        toolList
-      )) {
-        if (chunk.thinking) {
+    const stream = await this.agent.stream({
+      messages: this.messages,
+    });
+
+    let fullContent = '';
+    let isThinkingPrinted = false;
+
+    for await (const chunk of stream.fullStream) {
+      switch (chunk.type) {
+        case 'text-delta':
+          if (!isThinkingPrinted && fullContent === '') {
+            console.log();
+            console.log(
+              `${Colors.BOLD}${Colors.BRIGHT_BLUE}📝 Response:${Colors.RESET}`
+            );
+          }
+          process.stdout.write(chunk.text);
+          fullContent += chunk.text;
+          break;
+
+        case 'reasoning-delta':
           if (!isThinkingPrinted) {
             console.log();
             console.log(`${Colors.DIM}─${'─'.repeat(60)}${Colors.RESET}`);
@@ -120,81 +105,35 @@ export class Agent {
             );
             isThinkingPrinted = true;
           }
-          process.stdout.write(chunk.thinking);
-          fullThinking += chunk.thinking;
-        }
+          process.stdout.write(chunk.text);
+          break;
 
-        if (chunk.content) {
-          if (isThinkingPrinted && fullContent === '') {
-            console.log();
-            console.log();
-            console.log(`${Colors.DIM}─${'─'.repeat(60)}${Colors.RESET}`);
-            console.log();
-            console.log(
-              `${Colors.BOLD}${Colors.BRIGHT_BLUE}📝 Response:${Colors.RESET}`
-            );
-          } else if (!isThinkingPrinted && fullContent === '') {
-            // 只有 Response，无 Thinking：1 个空行 + Response 标题
-            console.log();
-            console.log(
-              `${Colors.BOLD}${Colors.BRIGHT_BLUE}📝 Response:${Colors.RESET}`
-            );
+        case 'tool-call':
+          const toolName = chunk.toolName;
+          const args = chunk.input as Record<string, unknown>;
+          console.log(
+            `\n${Colors.BOLD}${Colors.BRIGHT_YELLOW}🔧 Tool: ${toolName}${Colors.RESET}`
+          );
+          console.log(`${Colors.DIM}   Arguments:${Colors.RESET}`);
+          const truncatedArgs: Record<string, unknown> = {};
+          for (const [key, value] of Object.entries(args)) {
+            const valueStr = String(value);
+            if (valueStr.length > 200) {
+              truncatedArgs[key] = `${valueStr.slice(0, 200)}...`;
+            } else {
+              truncatedArgs[key] = value;
+            }
           }
-          process.stdout.write(chunk.content);
-          fullContent += chunk.content;
-        }
-
-        if (chunk.tool_calls) {
-          toolCalls = chunk.tool_calls;
-        }
-      }
-
-      if (!toolCalls || toolCalls.length === 0) {
-        console.log();
-      }
-
-      this.messages.push({
-        role: 'assistant',
-        content: fullContent,
-        thinking: fullThinking || undefined,
-        tool_calls: toolCalls || undefined,
-      });
-
-      if (!toolCalls || toolCalls.length === 0) {
-        return fullContent;
-      }
-
-      for (const toolCall of toolCalls) {
-        const toolCallId = toolCall.id;
-        const functionName = toolCall.function.name;
-        const args = toolCall.function.arguments || {};
-
-        // Tool 标题
-        console.log(
-          `\n${Colors.BOLD}${Colors.BRIGHT_YELLOW}🔧 Tool: ${functionName}${Colors.RESET}`
-        );
-
-        // Arguments
-        console.log(`${Colors.DIM}   Arguments:${Colors.RESET}`);
-        const truncatedArgs: Record<string, unknown> = {};
-        for (const [key, value] of Object.entries(args)) {
-          const valueStr = String(value);
-          if (valueStr.length > 200) {
-            truncatedArgs[key] = `${valueStr.slice(0, 200)}...`;
-          } else {
-            truncatedArgs[key] = value;
+          const argsJson = JSON.stringify(truncatedArgs, null, 2);
+          for (const line of argsJson.split('\n')) {
+            console.log(`   ${Colors.DIM}${line}${Colors.RESET}`);
           }
-        }
-        const argsJson = JSON.stringify(truncatedArgs, null, 2);
-        for (const line of argsJson.split('\n')) {
-          console.log(`   ${Colors.DIM}${line}${Colors.RESET}`);
-        }
+          break;
 
-        const result = await this.executeTool(functionName, args);
-
-        if (result.success) {
-          let resultText = result.content;
+        case 'tool-result': {
+          const resultContent = String(chunk.output ?? '');
           const MAX_LENGTH = 300;
+          let resultText = resultContent;
           if (resultText.length > MAX_LENGTH) {
             resultText = `${resultText.slice(
               0,
@@ -204,23 +143,21 @@ export class Agent {
           console.log(
             `${Colors.BRIGHT_GREEN}✓${Colors.RESET} ${Colors.BOLD}${Colors.BRIGHT_GREEN}Success:${Colors.RESET} ${resultText}\n`
           );
-        } else {
-          console.log(
-            `${Colors.BRIGHT_RED}✗${Colors.RESET} ${Colors.BOLD}${Colors.BRIGHT_RED}Error:${Colors.RESET} ${Colors.RED}${result.error ?? 'Unknown error'}${Colors.RESET}\n`
-          );
+          break;
         }
 
-        this.messages.push({
-          role: 'tool',
-          content: result.success
-            ? result.content
-            : `Error: ${result.error ?? 'Unknown error'}`,
-          tool_call_id: toolCallId,
-          tool_name: functionName,
-        });
+        case 'error':
+          console.log(
+            `${Colors.BRIGHT_RED}✗${Colors.RESET} ${Colors.BOLD}${Colors.BRIGHT_RED}Error:${Colors.RESET} ${Colors.RED}${chunk.error}${Colors.RESET}\n`
+          );
+          break;
       }
     }
 
-    return `Task couldn't be completed after ${this.maxSteps} steps.`;
+    const response = await stream.response;
+    this.messages.push(...response.messages);
+
+    console.log();
+    return fullContent;
   }
 }

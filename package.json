@@ -12,7 +12,7 @@
     "dev": "tsx src/index.ts",
     "test": "vitest",
     "test:run": "vitest run",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -p tests/tsconfig.json --noEmit",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\"",
@@ -35,10 +35,11 @@
     "vitest": "^4.0.15"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.71.2",
+    "@ai-sdk/anthropic": "^3.0.58",
+    "@ai-sdk/openai": "^3.0.41",
     "@modelcontextprotocol/sdk": "^1.1.0",
+    "ai": "^6.0.116",
     "commander": "^14.0.2",
-    "openai": "^6.10.0",
     "yaml": "^2.8.2",
     "zod": "^4.3.5"
   },

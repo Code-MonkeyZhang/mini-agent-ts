@@ -23,7 +23,7 @@ export class Logger {
     );
   }
 
-  static log(category: string, message: string, data?: any) {
+  static log(category: string, message: string, data?: unknown) {
     const timestamp = new Date().toISOString();
 
     let formattedData = '';
@@ -47,15 +47,15 @@ export class Logger {
     }
   }
 
-  static debug(category: string, message: string, data?: any) {
+  static debug(category: string, message: string, data?: unknown) {
     this.log(category, message, data);
   }
 
-  static logLLMRequest(request: any) {
+  static logLLMRequest(request: unknown) {
     this.log('LLM REQUEST', 'Full Request JSON', request);
   }
 
-  static logLLMResponse(response: any) {
+  static logLLMResponse(response: unknown) {
     this.log('LLM RESPONSE', 'Full Response Data', response);
   }
 }

@@ -4,20 +4,15 @@ import { Command } from 'commander';
 import { fileURLToPath } from 'node:url';
 import { createInterface } from 'node:readline/promises';
 import { Config } from './config.js';
-import { LLMClient } from './llm-client/llm-client.js';
+import { createModel } from './llm/factory.js';
 import { Logger } from './util/logger.js';
 import { Agent } from './agent.js';
 import {
-  BashKillTool,
-  BashOutputTool,
-  BashTool,
-  EditTool,
-  ReadTool,
-  WriteTool,
+  createBashTools,
+  createFileTools,
   cleanupMcpConnections,
   loadMcpToolsAsync,
   setMcpTimeoutConfig,
-  type Tool,
 } from './tools/index.js';
 
 // ============ Utilities ============
@@ -174,23 +169,15 @@ async function runAgent(workspaceDir: string): Promise<void> {
   console.log(`Base URL: ${config.llm.apiBase}`);
   console.log(`Type 'exit' to quit\n`);
 
-  // Create LLM Client
-  const llmClient = new LLMClient(
-    config.llm.apiKey,
-    config.llm.apiBase,
+  // Create AI SDK model
+  const model = createModel(
     config.llm.provider,
-    config.llm.model,
-    config.llm.retry
+    {
+      apiKey: config.llm.apiKey,
+      baseURL: config.llm.apiBase,
+    },
+    config.llm.model
   );
-
-  // Check connection
-  process.stdout.write('Checking API connection... ');
-  const isConnected = await llmClient.checkConnection();
-  if (isConnected) {
-    console.log('✅ OK');
-  } else {
-    console.log('❌ Failed (Check API Key/Network)');
-  }
 
   // Load system prompt
   let systemPrompt: string;
@@ -204,14 +191,13 @@ async function runAgent(workspaceDir: string): Promise<void> {
     console.log('⚠️  System prompt not found, using default');
   }
 
-  // Load Tools & MCPs
-  const tools: Tool[] = [];
-  tools.push(new ReadTool(workspaceDir));
-  tools.push(new WriteTool(workspaceDir));
-  tools.push(new EditTool(workspaceDir));
-  tools.push(new BashTool());
-  tools.push(new BashOutputTool());
-  tools.push(new BashKillTool());
+  // Create AI SDK tools
+  const fileTools = createFileTools(workspaceDir);
+  const bashTools = createBashTools();
+  const tools: Record<string, unknown> = {
+    ...fileTools,
+    ...bashTools,
+  };
 
   // Load Skills
   console.log('Loading Claude Skills...');
@@ -231,8 +217,16 @@ async function runAgent(workspaceDir: string): Promise<void> {
     const discoveredSkills = skillLoader.discoverSkills();
 
     if (discoveredSkills.length > 0) {
-      // Inject find skill tool
-      tools.push(new GetSkillTool(skillLoader));
+      const getSkillTool = new GetSkillTool(skillLoader);
+
+      tools['get_skill'] = {
+        description: getSkillTool.description,
+        inputSchema: getSkillTool.parameters as Record<string, unknown>,
+        execute: async (args: Record<string, unknown>) => {
+          const result = await getSkillTool.execute(args);
+          return result.success ? result.content : `Error: ${result.error}`;
+        },
+      };
 
       // Inject skills metadata into system prompt
       const skillsMetadata = skillLoader.getSkillsMetadataPrompt();
@@ -267,7 +261,16 @@ async function runAgent(workspaceDir: string): Promise<void> {
   if (mcpConfigPath) {
     const mcpTools = await loadMcpToolsAsync(mcpConfigPath);
     if (mcpTools.length > 0) {
-      tools.push(...mcpTools);
+      for (const tool of mcpTools) {
+        tools[tool.name] = {
+          description: tool.description,
+          inputSchema: tool.parameters as Record<string, unknown>,
+          execute: async (args: Record<string, unknown>) => {
+            const result = await tool.execute(args);
+            return result.success ? result.content : `Error: ${result.error}`;
+          },
+        };
+      }
       const msg = `✅ Loaded ${mcpTools.length} MCP tools (from: ${mcpConfigPath})`;
       Logger.log('startup', msg);
     } else {
@@ -281,13 +284,13 @@ async function runAgent(workspaceDir: string): Promise<void> {
     Logger.log('startup', msg);
   }
 
-  const agent = new Agent(
-    llmClient,
+  const agent = new Agent({
+    model,
     systemPrompt,
+    maxSteps: config.agent.maxSteps,
+    workspaceDir,
     tools,
-    config.agent.maxSteps,
-    workspaceDir
-  );
+  });
 
   const rl = createInterface({
     input: process.stdin,
@@ -324,7 +327,7 @@ async function runAgent(workspaceDir: string): Promise<void> {
         await agent.run();
       } catch (error) {
         if (error instanceof Error) {
-          console.log(`\n❌ Error: ${error.message}`);
+          console.log(`\n❌ Error: ${error.message}`, error);
           console.log('   Please check your API key and configuration.\n');
         } else {
           console.log(`\n❌ Unexpected error: ${String(error)}`);

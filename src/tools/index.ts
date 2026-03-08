@@ -6,8 +6,8 @@ export {
   type Tool,
 } from './base.js';
 
-export { ReadTool, WriteTool, EditTool } from './file-tools.js';
-export { BashTool, BashOutputTool, BashKillTool } from './bash-tool.js';
+export { createFileTools } from './file-tools.js';
+export { createBashTools } from './bash-tool.js';
 export {
   type MCPTimeoutConfig,
   MCPTool,
